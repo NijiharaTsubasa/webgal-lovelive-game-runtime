@@ -4,7 +4,7 @@
 
 Behavior 用于实现模型专属的运行时逻辑（相当于 Unity 的 MonoBehaviour），例如根据表情切换辅助节点的显隐、调整眼部节点或角色体型。它通过统一接口随模型加载和更新，让通用渲染器无需了解各游戏模型的内部实现。
 
-参数表情适配器将《BanG Dream! 少女乐团派对》Live2D `.mtn` 动作和 `.exp.json` 表情中的面部参数映射到 glTF 模型，使其能够使用这套 Live2D 资源驱动表情。
+参数表情适配器将《BanG Dream! 少女乐团派对》 Live2D `.mtn` 动作和 `.exp.json` 表情中的面部参数映射到 glTF 模型，使其能够使用这套 Live2D 资源驱动表情。
 
 - `packages/hasunosora_runtime`：莲之空。
 - `packages/garupa_runtime`：BanG Dream。
@@ -16,11 +16,9 @@ Behavior 用于实现模型专属的运行时逻辑（相当于 Unity 的 MonoBe
 
 | 游戏名 | Shader 移植 | 模型专属 Behavior |  参数表情适配器  |
 | ------ | ------ | ------ | ------ |
-| 《LoveLive! 学园偶像祭 群星闪耀》 | √已完成 | √表情适配、璃奈板适配 | √基本完成，视效仍待打磨 |
-| 《Link! Like! LoveLive!》 | √已完成 | 不涉及 | ×仅预研，未启动 |
-| 《BanG Dream! 少女乐团派对》 | ×仅预研，未启动 | ×仅实现 AvatarScaler，部分行为为近似还原 | ×未启动 |
-
-本项目中的JS文件与渲染器之间的接口参见 [webgal-lovelive-gltf-renderer](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer) docs 目录下的文档。
+| 《LoveLive! 学园偶像祭 群星闪耀》 | ✅已完成 | ✅表情适配、璃奈板适配 | ✅基本完成，视效仍待打磨 |
+| 《Link! Like! LoveLive!》 | ✅已完成 | 不涉及 | ❌仅预研，未启动 |
+| 《BanG Dream! 少女乐团派对》 | ❌仅预研，未启动 | ❌仅实现 AvatarScaler，部分行为为近似还原 | ❌未启动 |
 
 JS 与渲染器之间的通用接口见 [渲染器仓库的标准文档](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer) ；各游戏运行时与模型配置、glTF 数据之间的自定义约定见 [游戏运行时数据接口](docs/README.md) 。
 
