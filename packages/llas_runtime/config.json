@@ -1,0 +1,81 @@
+{
+  "components": [
+    {
+      "type": "shader",
+      "name": "llas-member",
+      "description": "LLAS AS/Member Main and Outline",
+      "src": "shaders/member.glsl",
+      "script": "shaders/member.js",
+      "samplers": [
+        { "name": "MainTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "RimlightTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "CheekTex", "type": "sampler2DArray", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "EmissiveScrollTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "EmissiveTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "MatcapTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "MatcapMaskTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } }
+      ],
+      "passes": [
+        {
+          "id": "Main",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexSkinNormal": "VERTEX_SKINNORMAL",
+            "vertexSkinning": "VERTEX_SKINNING",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        },
+        {
+          "id": "Outline",
+          "sections": {
+            "vertexPrelude": "OUTLINE_VERTEX_UNIFORMS",
+            "vertexProject": "OUTLINE_VERTEX_INJECT",
+            "fragmentPrelude": "OUTLINE_FRAGMENT_UNIFORMS",
+            "fragmentBody": "OUTLINE_FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "llas-general-transparent",
+      "description": "LLAS AS/General/Transparent",
+      "src": "shaders/transparent.glsl",
+      "script": "shaders/transparent.js",
+      "samplers": [
+        { "name": "MainTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } }
+      ],
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexInject": "VERTEX_INJECT",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "behavior",
+      "namespace": "LLAS",
+      "name": "BoardFace",
+      "script": "behaviors/board-face.js"
+    },
+    {
+      "type": "behavior",
+      "namespace": "LLAS",
+      "name": "Face",
+      "script": "behaviors/face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "llas-garupa-face",
+      "description": "LLAS ordinary-face adaptation for BanG Dream source parameters",
+      "motionGroup": "llas",
+      "script": "adapters/llas-live2d-face.js"
+    }
+  ]
+}

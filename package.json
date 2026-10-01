@@ -1,0 +1,13 @@
+{
+  "name": "webgal-lovelive-game-runtime",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { "./*": "./packages/*" },
+  "files": ["packages"],
+  "scripts": { "test": "node --test --test-concurrency=1 tests/*.test.js tests/*.test.mjs" },
+  "devDependencies": {
+    "three": "^0.185.0",
+    "playwright": "^1.62.0",
+    "webgal-lovelive-gltf-renderer": "git+https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer.git"
+  }
+}

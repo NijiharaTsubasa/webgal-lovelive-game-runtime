@@ -1,0 +1,11 @@
+{
+  "components": [
+    {
+      "type": "behavior",
+      "namespace": "Garupa",
+      "name": "AvatarScaler",
+      "script": "behaviors/avatar-scaler.js",
+      "executionOrder": 0
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "components": [
+    {
+      "type": "shader",
+      "name": "melpot-toon",
+      "description": "MELPOT Toon UberToon shader (main + outline pass)",
+      "src": "shaders/melpot-toon.glsl",
+      "samplers": [
+        { "name": "1stShadowTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "2ndShadowTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "ControlMap1", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "ControlMap2", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "NormalTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0.5, 0.5, 1, 1] } },
+        { "name": "DetailMask", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "MatcapTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "GlossMap", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "UVTexMask", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } }
+      ],
+      "script": "shaders/melpot-toon.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexSkinNormal": "VERTEX_SKINNORMAL",
+            "vertexSkinning": "VERTEX_SKINNING",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        },
+        {
+          "id": "Outline",
+          "sections": {
+            "vertexPrelude": ["VERTEX_PRELUDE", "OUTLINE_VERTEX_UNIFORMS"],
+            "vertexSkinNormal": "VERTEX_SKINNORMAL",
+            "vertexSkinning": "VERTEX_SKINNING",
+            "vertexInject": "OUTLINE_VERTEX_INJECT",
+            "fragmentPrelude": ["FRAGMENT_PRELUDE", "OUTLINE_FRAGMENT_UNIFORMS"],
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentAfterColor": "OUTLINE_FRAGMENT_DISCARD",
+            "fragmentBody": "OUTLINE_FRAGMENT_BODY"
+          },
+          "renderState": { "cull": 1 }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "character-eye",
+      "description": "Eye base (iris + sclera)",
+      "src": "shaders/character-eye.glsl",
+      "samplers": [
+        { "name": "MainTex", "type": "sampler2D", "missing": { "behavior": "error" } }
+      ],
+      "script": "shaders/character-eye.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexInject": "VERTEX_INJECT",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "character-highlight",
+      "description": "Eye sparkle / highlight",
+      "src": "shaders/character-highlight.glsl",
+      "samplers": [
+        { "name": "MainTexture", "type": "sampler2D", "missing": { "behavior": "error" } },
+        { "name": "CryTexture", "type": "sampler2D", "missing": { "behavior": "error" } }
+      ],
+      "script": "shaders/character-highlight.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexInject": "VERTEX_INJECT",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": ["COMPILED_PATTERN", "COMPILED_CLIP", "COMPILED_LIGHT"],
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "highlight-distortion",
+      "description": "Lens refraction / distortion (GrabPass)",
+      "src": "shaders/highlight-distortion.glsl",
+      "samplers": [],
+      "script": "shaders/highlight-distortion.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexSkinNormal": "VERTEX_SKINNORMAL",
+            "vertexSkinning": "VERTEX_SKINNING",
+            "vertexProject": "VERTEX_PROJECT",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "melpot-toon-hlslmacros",
+      "description": "MELPOT UberToon HLSLMacros facial shader",
+      "src": "shaders/melpot-toon-hlslmacros.glsl",
+      "samplers": [
+        { "name": "MainTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "ControlMap1", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "ControlMap2", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "DetailMask", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "1stShadowTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "2ndShadowTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "MatcapTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } },
+        { "name": "GlossMap", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } }
+      ],
+      "script": "shaders/melpot-toon-hlslmacros.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "HLSL_MACROS_VERTEX_PRELUDE",
+            "vertexSkinNormal": "HLSL_MACROS_VERTEX_SKINNORMAL",
+            "vertexSkinning": "HLSL_MACROS_VERTEX_SKINNING",
+            "fragmentPrelude": "HLSL_MACROS_FRAGMENT_PRELUDE",
+            "fragmentFunctions": "HLSL_MACROS_SOURCE_FUNCTIONS",
+            "fragmentBody": "HLSL_MACROS_FORWARD_BODY"
+          }
+        },
+        {
+          "id": "Outline",
+          "sections": {
+            "vertexPrelude": ["HLSL_MACROS_VERTEX_PRELUDE", "HLSL_MACROS_OUTLINE_VERTEX_PRELUDE"],
+            "vertexSkinNormal": "HLSL_MACROS_VERTEX_SKINNORMAL",
+            "vertexSkinning": "HLSL_MACROS_VERTEX_SKINNING",
+            "vertexInject": "HLSL_MACROS_OUTLINE_VERTEX_INJECT",
+            "fragmentPrelude": ["HLSL_MACROS_FRAGMENT_PRELUDE", "HLSL_MACROS_OUTLINE_FRAGMENT_PRELUDE"],
+            "fragmentFunctions": "HLSL_MACROS_SOURCE_FUNCTIONS",
+            "fragmentBody": "HLSL_MACROS_OUTLINE_BODY"
+          },
+          "renderState": { "cull": 1 }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "urp-lit",
+      "description": "Unity URP Lit for the source untextured Eye strip",
+      "src": "shaders/urp-lit.glsl",
+      "samplers": [],
+      "script": "shaders/urp-lit.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexInject": "VERTEX_INJECT",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "melpot-toon-eye",
+      "description": "MELPOT UberToon eye shader",
+      "src": "shaders/melpot-toon-eye.glsl",
+      "samplers": [
+        { "name": "MainTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "HighlightMainTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [1, 1, 1, 1] } },
+        { "name": "HighlightSubTex", "type": "sampler2D", "missing": { "behavior": "constant", "value": [0, 0, 0, 1] } }
+      ],
+      "script": "shaders/melpot-toon-eye.js",
+      "passes": [
+        {
+          "id": "Forward",
+          "sections": {
+            "vertexPrelude": "VERTEX_PRELUDE",
+            "vertexSkinning": "VERTEX_SKINNING",
+            "fragmentPrelude": "FRAGMENT_PRELUDE",
+            "fragmentFunctions": "FRAGMENT_FUNCTIONS",
+            "fragmentBody": "FRAGMENT_BODY"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1672 @@
+{
+  "components": [
+    {
+      "type": "model",
+      "name": "ch0009_co0005_member",
+      "group": "llas",
+      "role": "integrated",
+      "model": "model.glb",
+      "morphPoses": [
+        {
+          "name": "eye/Close",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 1.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 1.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 1.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Closish",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 1.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Open",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 1.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/WideOpen",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 1.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/CloseSmile",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 1.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 1.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 1.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/WinkR",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 1.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 1.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/WinkL",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 1.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 1.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Trouble",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 1.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Sad",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 1.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Angry",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 1.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Shy",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 1.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Missing",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 1.0,
+              "EyeBlendShape.eye_facial_019": 0.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 1.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 0.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 1.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 0.0
+            }
+          }
+        },
+        {
+          "name": "eye/Tightly",
+          "targets": {
+            "Eye_Around": {
+              "EyeBlendShape.eye_facial_001": 0.0,
+              "EyeBlendShape.eye_facial_002": 0.0,
+              "EyeBlendShape.eye_facial_003_006_011": 0.0,
+              "EyeBlendShape.eye_facial_004": 0.0,
+              "EyeBlendShape.eye_facial_005": 0.0,
+              "EyeBlendShape.eye_facial_012": 0.0,
+              "EyeBlendShape.eye_facial_013": 0.0,
+              "EyeBlendShape.eye_facial_014": 0.0,
+              "EyeBlendShape.eye_facial_015": 0.0,
+              "EyeBlendShape.eye_facial_016": 0.0,
+              "EyeBlendShape.eye_facial_017": 0.0,
+              "EyeBlendShape.eye_facial_018": 0.0,
+              "EyeBlendShape.eye_facial_019": 1.0,
+              "EyeBlendShape.eye_facial_099": 0.0
+            },
+            "LeftEyeWhiteLine": {
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002": 0.0,
+              "LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_003": 1.0
+            },
+            "RightEyeWhiteLine": {
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_001": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_002": 0.0,
+              "RightEyeWhiteLineBlendShape.RightEye_LineWhite_003": 1.0
+            }
+          }
+        },
+        {
+          "name": "mouth/A",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 1.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/I",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 1.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/U",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 1.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/E",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 1.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/O",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 1.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/N",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 1.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Smile",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 1.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Laugh",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 1.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Trouble",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 1.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Sad",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 1.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Angry",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 1.0,
+              "MouthBlendShape.mouth_facial_012": 0.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        },
+        {
+          "name": "mouth/Shy",
+          "targets": {
+            "Mouth": {
+              "MouthBlendShape.mouth_facial_001": 0.0,
+              "MouthBlendShape.mouth_facial_002": 0.0,
+              "MouthBlendShape.mouth_facial_003": 0.0,
+              "MouthBlendShape.mouth_facial_004": 0.0,
+              "MouthBlendShape.mouth_facial_005": 0.0,
+              "MouthBlendShape.mouth_facial_006": 0.0,
+              "MouthBlendShape.mouth_facial_007": 0.0,
+              "MouthBlendShape.mouth_facial_008": 0.0,
+              "MouthBlendShape.mouth_facial_009": 0.0,
+              "MouthBlendShape.mouth_facial_010": 0.0,
+              "MouthBlendShape.mouth_facial_011": 0.0,
+              "MouthBlendShape.mouth_facial_012": 1.0,
+              "MouthBlendShape.mouth_facial_099": 0.0
+            }
+          }
+        }
+      ],
+      "expressionGroups": [
+        {
+          "name": "eye",
+          "states": [
+            {
+              "name": "Open",
+              "poses": {
+                "eye/Open": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Open": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "Close",
+              "poses": {
+                "eye/Close": 1
+              }
+            },
+            {
+              "name": "Closish",
+              "poses": {
+                "eye/Closish": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Closish": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "WideOpen",
+              "poses": {
+                "eye/WideOpen": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/WideOpen": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "CloseSmile",
+              "poses": {
+                "eye/CloseSmile": 1
+              }
+            },
+            {
+              "name": "WinkR",
+              "poses": {
+                "eye/WinkR": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/WinkR": 0,
+                  "eye/CloseSmile": 1
+                }
+              }
+            },
+            {
+              "name": "WinkL",
+              "poses": {
+                "eye/WinkL": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/WinkL": 0,
+                  "eye/CloseSmile": 1
+                }
+              }
+            },
+            {
+              "name": "Trouble",
+              "poses": {
+                "eye/Trouble": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Trouble": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "Sad",
+              "poses": {
+                "eye/Sad": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Sad": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "Angry",
+              "poses": {
+                "eye/Angry": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Angry": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "Shy",
+              "poses": {
+                "eye/Shy": 1
+              },
+              "controls": {
+                "blink": {
+                  "eye/Shy": 0,
+                  "eye/Close": 1
+                }
+              }
+            },
+            {
+              "name": "Missing",
+              "poses": {
+                "eye/Missing": 1
+              }
+            },
+            {
+              "name": "Tightly",
+              "poses": {
+                "eye/Tightly": 1
+              }
+            }
+          ]
+        },
+        {
+          "name": "mouth",
+          "states": [
+            {
+              "name": "N",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/N": 1
+                }
+              }
+            },
+            {
+              "name": "A",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/A": 1
+                }
+              }
+            },
+            {
+              "name": "I",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/I": 1
+                }
+              }
+            },
+            {
+              "name": "U",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/U": 1
+                }
+              }
+            },
+            {
+              "name": "E",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/E": 1
+                }
+              }
+            },
+            {
+              "name": "O",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/O": 1
+                }
+              }
+            },
+            {
+              "name": "Smile",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/A": 1
+                }
+              }
+            },
+            {
+              "name": "Laugh",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/Laugh": 1
+                }
+              }
+            },
+            {
+              "name": "Trouble",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/Trouble": 1
+                }
+              }
+            },
+            {
+              "name": "Sad",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/Sad": 1
+                }
+              }
+            },
+            {
+              "name": "Angry",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/Angry": 1
+                }
+              }
+            },
+            {
+              "name": "Shy",
+              "poses": {
+                "mouth/Smile": 1
+              },
+              "controls": {
+                "speech": {
+                  "mouth/Smile": 0,
+                  "mouth/Shy": 1
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "expressions": [
+        {
+          "name": "Neutral",
+          "selections": {
+            "eye": "Open",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "Close",
+          "selections": {
+            "eye": "Close",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "Closish",
+          "selections": {
+            "eye": "Closish",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "WideOpen",
+          "selections": {
+            "eye": "WideOpen",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "CloseSmile",
+          "selections": {
+            "eye": "CloseSmile",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "WinkR",
+          "selections": {
+            "eye": "WinkR",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "WinkL",
+          "selections": {
+            "eye": "WinkL",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "Trouble",
+          "selections": {
+            "eye": "Trouble",
+            "mouth": "Trouble"
+          }
+        },
+        {
+          "name": "Sad",
+          "selections": {
+            "eye": "Sad",
+            "mouth": "Sad"
+          }
+        },
+        {
+          "name": "Angry",
+          "selections": {
+            "eye": "Angry",
+            "mouth": "Angry"
+          }
+        },
+        {
+          "name": "Shy",
+          "selections": {
+            "eye": "Shy",
+            "mouth": "Shy"
+          }
+        },
+        {
+          "name": "Missing",
+          "selections": {
+            "eye": "Missing",
+            "mouth": "A"
+          }
+        },
+        {
+          "name": "Tightly",
+          "selections": {
+            "eye": "Tightly",
+            "mouth": "A"
+          }
+        }
+      ],
+      "defaultExpression": "Neutral",
+      "behaviors": [
+        {
+          "name": "LLAS.Face",
+          "required": true,
+          "parameters": {
+            "bindings": [
+              {
+                "node": "LeftEyeWhiteLine",
+                "property": "visible",
+                "default": false,
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkL",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/Missing",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/Tightly",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "node": "RightEyeWhiteLine",
+                "property": "visible",
+                "default": false,
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkR",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/Missing",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  },
+                  {
+                    "name": "eye/Tightly",
+                    "length": 1.0,
+                    "curve": [
+                      [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9166666865348816,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      [
+                        0.9999898672103882,
+                        17737904553984.0,
+                        -2660685568.0,
+                        98689.5078125,
+                        0.0
+                      ],
+                      [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                      ]
+                    ]
+                  }
+                ]
+              },
+              {
+                "node": "LeftEye2",
+                "property": "position",
+                "default": [
+                  -0.0,
+                  0.0,
+                  0.0
+                ],
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "value": [
+                      1.9515998701535864e-06,
+                      -8.622999985163915e-07,
+                      1.7950000028577051e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Closish",
+                    "value": [
+                      1.9515998701535864e-06,
+                      0.0005817430792376399,
+                      1.7950000028577051e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "value": [
+                      1.9515998701535864e-06,
+                      -8.622999985163915e-07,
+                      1.7950000028577051e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkR",
+                    "value": [
+                      1.9515998701535864e-06,
+                      -8.622999985163915e-07,
+                      1.7950000028577051e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkL",
+                    "value": [
+                      1.9515998701535864e-06,
+                      -8.622999985163915e-07,
+                      1.7950000028577051e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Angry",
+                    "value": [
+                      2.2224000986170722e-06,
+                      -2.358399797230959e-06,
+                      1.8030000319413375e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Shy",
+                    "value": [
+                      2.2224000986170722e-06,
+                      -2.358399797230959e-06,
+                      1.8030000319413375e-06
+                    ]
+                  }
+                ]
+              },
+              {
+                "node": "RightEye2",
+                "property": "position",
+                "default": [
+                  -8.881783998477905e-18,
+                  0.0,
+                  -8.881783998477905e-18
+                ],
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "value": [
+                      -2.222200009782682e-06,
+                      -2.358399797230959e-06,
+                      1.8020000425167382e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Closish",
+                    "value": [
+                      -2.222200009782682e-06,
+                      0.000580246967729181,
+                      1.8020000425167382e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "value": [
+                      -2.222200009782682e-06,
+                      -2.358399797230959e-06,
+                      1.8020000425167382e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkR",
+                    "value": [
+                      -2.222200009782682e-06,
+                      -2.358399797230959e-06,
+                      1.8020000425167382e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkL",
+                    "value": [
+                      -2.222200009782682e-06,
+                      -2.358399797230959e-06,
+                      1.8020000425167382e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Angry",
+                    "value": [
+                      -2.2224000986170722e-06,
+                      -2.358399797230959e-06,
+                      1.8030000319413375e-06
+                    ]
+                  },
+                  {
+                    "name": "eye/Shy",
+                    "value": [
+                      -2.2224000986170722e-06,
+                      -2.358399797230959e-06,
+                      1.8030000319413375e-06
+                    ]
+                  }
+                ]
+              },
+              {
+                "node": "LeftEye2",
+                "property": "scale",
+                "default": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Closish",
+                    "value": [
+                      1.0,
+                      0.9067198038101196,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkR",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkL",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Angry",
+                    "value": [
+                      1.0,
+                      0.9777777791023254,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Shy",
+                    "value": [
+                      0.982143759727478,
+                      0.982143759727478,
+                      1.0
+                    ]
+                  }
+                ]
+              },
+              {
+                "node": "RightEye2",
+                "property": "scale",
+                "default": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "poses": [
+                  {
+                    "name": "eye/Close",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Closish",
+                    "value": [
+                      1.0,
+                      0.9067198038101196,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/CloseSmile",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkR",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/WinkL",
+                    "value": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Angry",
+                    "value": [
+                      1.0,
+                      0.9777777791023254,
+                      1.0
+                    ]
+                  },
+                  {
+                    "name": "eye/Shy",
+                    "value": [
+                      0.982143759727478,
+                      0.982143759727478,
+                      1.0
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "humanoidScale": 0.8897596597671509,
+      "motionGroup": "llas"
+    }
+  ]
+}
