@@ -71,6 +71,12 @@
       "script": "behaviors/face.js"
     },
     {
+      "type": "behavior",
+      "namespace": "LLAS",
+      "name": "SkirtSafe",
+      "script": "behaviors/skirt-safe.js"
+    },
+    {
       "type": "garupa-expression-adapter",
       "name": "llas-garupa-face",
       "description": "LLAS ordinary-face adaptation for BanG Dream source parameters",
