@@ -1,6 +1,13 @@
 {
   "components": [
     {
+      "type": "behavior",
+      "namespace": "Hasunosora",
+      "name": "SubBoneController",
+      "script": "behaviors/sub-bone.js",
+      "executionOrder": 28020
+    },
+    {
       "type": "shader",
       "name": "melpot-toon",
       "description": "MELPOT Toon UberToon shader (main + outline pass)",

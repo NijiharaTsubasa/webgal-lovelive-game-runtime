@@ -26,10 +26,12 @@ vMelpotWorldNormal = normalize( melpotWorldToObjectNormal * objectNormal );
 		: vec3( 1.0, 0.0, 0.0 ) );
 	vMelpotWorldBitangent = normalize( cross( vMelpotWorldNormal, vMelpotWorldTangent ) );
 #endif
+// @end
+
+// @section VERTEX_SKINNING
 {
-	// spherical-corrected normal (MELPOT_VertexNormal): tilt the normal toward
-	// the radial from _SphericalNormalCorrectOrigin (object-space), in world.
-	vec2 melpotRadialDelta = position.xz - uSphericalNormalCorrectOrigin.xz;
+	// Unity's vertex program receives the deformed object-space position.
+	vec2 melpotRadialDelta = transformed.xz - uSphericalNormalCorrectOrigin.xz;
 	float melpotRadialLengthSquared = max( dot( melpotRadialDelta, melpotRadialDelta ), 1.17549435e-38 );
 	vec2 melpotRadial = melpotRadialDelta * inversesqrt( melpotRadialLengthSquared );
 	vec3 melpotRwDelta = melpotWorldToObjectNormal * vec3( melpotRadial.x, 0.0, melpotRadial.y );
@@ -37,9 +39,6 @@ vMelpotWorldNormal = normalize( melpotWorldToObjectNormal * objectNormal );
 	vec3 melpotRw = melpotRwDelta * inversesqrt( melpotRwLengthSquared );
 	vMelpotSphericalNormal = vMelpotWorldNormal + uSphericalNormalCorrect * ( melpotRw - vMelpotWorldNormal );
 }
-// @end
-
-// @section VERTEX_SKINNING
 vMelpotWorldPos = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;
 // @end
 

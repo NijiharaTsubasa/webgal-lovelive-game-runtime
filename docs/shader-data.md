@@ -43,7 +43,7 @@ intensity 钳制为 `[0,1]`；layer 四舍五入并钳制到纹理数组层范�
 
 ## 4. 莲之空场景输入
 
-莲之空包没有额外的 Behavior 参数或专属节点绑定表。材质数据仍通过第一节的字段进入；各 JS 从当前 Three 场景取得灯光、环境、相机、绘制尺寸和 MSAA 状态。相关适配集中在各 Shader JS 与 `shared-runtime.js`，不能据此复现原 Unity 场景本身。
+材质数据通过第一节的字段进入；各 JS 从当前 Three 场景取得灯光、环境、相机、绘制尺寸和 MSAA 状态。相关适配集中在各 Shader JS 与 `shared-runtime.js`，不能据此复现原 Unity 场景本身。
 
 `highlight-distortion` 的抓屏纹理由 JS 管理，GLB 不需要引用它；其生命周期和抓取时机属于 Shader 实现。GLSL 材质参数、原贴图、顶点属性和 Pass 顺序仍来自资源，不能用节点名或材质名替代这些数据。
 
