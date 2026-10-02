@@ -62,6 +62,8 @@ function fixture(shared=geometries()){
   const root=new Group(),nodes=new Map();
   const add=(name,object,parent=root)=>{object.name=name;nodes.set(name,object);parent.add(object);return object;};
   const eye=add('Eye_Around',new Mesh(shared.eye,new MeshBasicMaterial()));
+  const skin=geometry([[-3,0,-1],[3,0,-1],[-3,4,-1],[3,0,-1],[3,4,-1],[-3,4,-1]],Array.from({length:6},()=>[0,0]),{});
+  add('Face',new Mesh(skin,new MeshBasicMaterial()));
   const mouth=add('Mouth',new Mesh(shared.mouth,new MeshBasicMaterial()));
   const lineL=add('LeftEyeWhiteLine',new Mesh(shared.line,new MeshBasicMaterial()));
   const lineR=add('RightEyeWhiteLine',new Mesh(shared.line,new MeshBasicMaterial()));
@@ -296,4 +298,55 @@ test('negative brow form keeps native reverse curvature and depth but not native
   assert.ok(point(f.eye,7)[1]<(point(f.eye,6)[1]+point(f.eye,8)[1])/2);
   for(let i=9;i<12;i++)nearArray(point(f.eye,i),neutral[i]);
   driver.dispose();
+});
+
+test('brows remain in front of a sloping face through continuous angle/form/position input and native switching',()=>{
+  const f=fixture(),face=f.nodes.get('Face'),p=face.geometry.attributes.position;
+  // A sloping forehead intersects an otherwise unchanged planar brow when it rises.
+  for(let i=0;i<p.count;i++)p.setZ(i,.5*(p.getY(i)-2.4)-.02);
+  const driver=new LlasLive2dFace(f.character),original=f.eye.geometry.attributes.position.array.slice();
+  f.weight(f.eye,'sad',.4);
+  for(const side of ['L','R'])for(let step=0;step<=20;step++){
+    const t=step/20,indices=side==='L'?[0,1,2]:[6,7,8];
+    driver.setParameters({[`PARAM_BROW_${side}_Y`]:t,[`PARAM_BROW_${side}_ANGLE`]:2*t-1,[`PARAM_BROW_${side}_FORM`]:-t});driver.update();
+    for(const i of indices){const [x,y,z]=point(f.eye,i);assert.ok(z>.5*(y-2.4)-.02,`${side} step ${step} brow vertex ${i} buried in face`);}
+    const untouched=side==='L'?[6,7,8]:[0,1,2];
+    for(const i of untouched)near(point(f.eye,i)[2],0);
+    driver.beginFrame();near(f.weight(f.eye,'sad'),.4);
+    assert.equal(f.weight(f.eye,`brow:${side}:depth`)??0,0);
+  }
+  assert.deepEqual(f.eye.geometry.attributes.position.array,original);
+  driver.dispose();near(f.weight(f.eye,'sad'),.4);
+});
+
+test('brow surface support respects separate mesh frames and whole-character scale',()=>{
+  const a=fixture(),b=fixture();
+  for(const f of [a,b]){
+    const p=f.nodes.get('Face').geometry.attributes.position;
+    for(let i=0;i<p.count;i++)p.setZ(i,.5*(p.getY(i)-2.4)-.02);
+  }
+  const face=b.nodes.get('Face');face.position.set(.4,.2,-.3);face.rotation.set(.1,.2,.3);face.scale.set(1.2,.8,1.1);face.updateMatrix();
+  face.geometry.applyMatrix4(face.matrix.clone().invert());
+  b.root.rotation.set(.2,.4,.1);b.root.scale.setScalar(.25);
+  a.root.updateMatrixWorld(true);b.root.updateMatrixWorld(true);
+  const da=new LlasLive2dFace(a.character),db=new LlasLive2dFace(b.character);
+  const parameters={PARAM_BROW_L_Y:1,PARAM_BROW_L_FORM:-.7,PARAM_BROW_L_ANGLE:.3};
+  da.setParameters(parameters);db.setParameters(parameters);da.update();db.update();
+  assert.ok(a.weight(a.eye,'brow:L:depth')>0);
+  near(a.weight(a.eye,'brow:L:depth'),b.weight(b.eye,'brow:L:depth'));
+  for(let i=0;i<12;i++)nearArray(point(a.eye,i),point(b.eye,i));
+  da.dispose();db.dispose();
+});
+
+test('brow contact starts continuously and keeps a fixed form rigid while crossing it',()=>{
+  const f=fixture(),p=f.nodes.get('Face').geometry.attributes.position;
+  for(let i=0;i<p.count;i++)p.setZ(i,.5*(p.getY(i)-2.4)-.02);
+  const driver=new LlasLive2dFace(f.character);let previous=0,reference;
+  for(let step=0;step<=200;step++){
+    driver.setParameters({PARAM_BROW_L_Y:step/200,PARAM_BROW_L_FORM:-.7,PARAM_BROW_L_ANGLE:.2});driver.update();
+    const shift=f.weight(f.eye,'brow:L:depth');assert.ok(Math.abs(shift-previous)<.002);previous=shift;
+    const a=point(f.eye,0),b=point(f.eye,1),distance=Math.hypot(...a.map((v,k)=>v-b[k]));
+    if(reference===undefined)reference=distance;else near(distance,reference);
+  }
+  assert.ok(previous>0);driver.dispose();
 });

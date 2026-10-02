@@ -1,5 +1,5 @@
 import { evaluateBinding } from '../behaviors/face.js';
-import { FaceMorphWorkspace, morphVector, maskedDifference, classifyEyeRegions, regionBounds, planarChannels, mouthChannels, alignedShapeDifference } from './llas-face-geometry.js';
+import { FaceMorphWorkspace, morphVector, maskedDifference, classifyEyeRegions, regionBounds, planarChannels, mouthChannels, alignedShapeDifference, browDepthConstraint } from './llas-face-geometry.js';
 import { llasFaceControls } from './llas-live2d-parameters.js';
 
 // LLAS-specific authored rig. Native LLAS.Face remains unchanged; the host
@@ -74,10 +74,14 @@ export class LlasLive2dFace {
         name==='sin'?channels.normalSin:name==='cos'?channels.normalCos:undefined);
       const negative=alignedShapeDifference(this.eyeMesh.geometry,regions[side].brow,open,vector('Sad'),openNormal,vector('Sad','normal'));
       this.eyeWork.add(`brow:${side}:negative`,negative.positions,negative.normals);
+      const depth=new Float32Array(open.length);
+      for(let i=0;i<regions[side].brow.length;i++)if(regions[side].brow[i])depth[i*3+2]=1;
+      this.eyeWork.add(`brow:${side}:depth`,depth);
       const lid=new Float32Array(open.length);
       for(let i=0;i<regions[side].lid.length;i++)if(regions[side].lid[i])lid[i*3+1]=1;
       this.eyeWork.add(`eye:${side}:lid`,lid);
     }
+    this.browDepth=browDepthConstraint(this.eyeMesh,mesh('Face'),regions,open,context.THREE);
     this.mouthMesh=mesh('Mouth');
     this.mouthWork=new FaceMorphWorkspace(this.root,this.mouthMesh,context.THREE);this.workspaces.push(this.mouthWork);
     const mouth=mouthChannels(this.mouthMesh.geometry,morphVector(this.mouthMesh,this.poses.get('mouth/A').Mouth),
@@ -149,6 +153,8 @@ export class LlasLive2dFace {
         for(const [name,value] of Object.entries(targets))object.morphTargetInfluences[object.morphTargetDictionary[name]]+=amount*value;
       }
     }
+    this.eyeWork.write(weights);
+    for(const side of ['L','R'])weights[`brow:${side}:depth`]=this.browDepth(side);
     this.eyeWork.write(weights);
     writePose('mouth/Smile',1-controls.mouth.open);writePose('mouth/A',controls.mouth.open);
     const mouth=controls.mouth,open=mouth.open,scale=mouth.scale;

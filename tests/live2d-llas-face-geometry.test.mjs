@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BufferGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial } from 'three';
-import { FaceMorphWorkspace, morphVector, maskedDifference, connectedVertices, alignedShapeDifference, mouthSupportWeights, mouthChannels } from '../packages/llas_runtime/adapters/llas-face-geometry.js';
+import { FaceMorphWorkspace, morphVector, maskedDifference, connectedVertices, alignedShapeDifference, mouthSupportWeights, mouthChannels, triangleDepthGap } from '../packages/llas_runtime/adapters/llas-face-geometry.js';
 
 function fixture() {
   const geometry = new BufferGeometry();
@@ -51,6 +51,18 @@ test('topology and regional difference preserve independent left/right support',
 });
 
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
+test('brow depth uses interior face peaks and edge crossings, independently of winding and scale',()=>{
+  const brow=[{x:0,y:0,z:0},{x:2,y:0,z:0},{x:0,y:2,z:0}];
+  const skin=[{x:-1,y:1,z:-1},{x:1,y:1,z:.4},{x:1,y:3,z:-1}];
+  near(triangleDepthGap(brow,skin),.4);
+  near(triangleDepthGap([...brow].reverse(),skin),.4);
+  const crossing=[{x:-1,y:1,z:-1},{x:1,y:-1,z:1},{x:3,y:3,z:1}];
+  assert.ok(triangleDepthGap(brow,crossing)>0);
+  const moved=skin.map(p=>({...p,x:p.x+10}));
+  assert.equal(triangleDepthGap(brow,moved),-Infinity);
+  const scale=points=>points.map(p=>({x:p.x*.01,y:p.y*.01,z:p.z*.01}));
+  near(triangleDepthGap(scale(brow),scale(skin)),.004);
+});
 function alignedFixture({reverse=false}={}){
   const points=[[-1,0,0],[0,.4,0],[1,0,0],[3,1,0],[4,1,0],[3,2,0]];
   const geometry=new BufferGeometry();
