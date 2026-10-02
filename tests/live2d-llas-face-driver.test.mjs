@@ -4,6 +4,8 @@ import { BufferGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial,
 import * as THREE from 'three';
 import { LlasLive2dFace, createExpressionAdapter } from '../packages/llas_runtime/adapters/llas-live2d-face.js';
 
+const sourceName=(kind,name)=>({eye:{open:'EyeBlendShape.eye_facial_003',close:'EyeBlendShape.eye_facial_001',smile:'EyeBlendShape.eye_facial_005',wide:'EyeBlendShape.eye_facial_004',sad:'EyeBlendShape.eye_facial_015'},mouth:{smile:'MouthBlendShape.mouth_facial_007',a:'MouthBlendShape.mouth_facial_001',o:'MouthBlendShape.mouth_facial_005',sad:'MouthBlendShape.mouth_facial_010'},Left:{close:'LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001',smile:'LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002'},Right:{close:'RightEyeWhiteLineBlendShape.RightEye_LineWhite_001',smile:'RightEyeWhiteLineBlendShape.RightEye_LineWhite_002'}}[kind]?.[name]??name);
+const named=(kind,targets)=>Object.fromEntries(Object.entries(targets).map(([name,value])=>[sourceName(kind,name),value]));
 const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 const nearArray=(a,b)=>{assert.equal(a.length,b.length);a.forEach((v,i)=>near(v,b[i]));};
 function geometry(points,uv,targets){
@@ -46,16 +48,17 @@ function geometries(){
   const mouthTargets={
     smile:mouthPoints.map(()=>[0,0,0]),
     a:mouthPoints.map((_,i)=>[0,i<3?.12:-.12,0]),
+    o:mouthPoints.map(([x],i)=>[-.5*x,(i<3?1:-1)*(i===1||i===5?.13:.04),i<3?.015:-.01]),
     sad:mouthPoints.map(([x])=>[0,.08*(1-(x/.3)**2),.01]),
     unrelated:mouthPoints.map(()=>[0,0,.2]),
   };
   const linePoints=[[-.1,0,0],[0,.02,0],[.1,0,0]];
   return {
-    eye:geometry(eyePoints,eyeUv,eyeTargets),
-    mouth:geometry(mouthPoints,mouthUv,mouthTargets),
-    line:geometry(linePoints,linePoints.map(()=>[0,0]),{
+    eye:geometry(eyePoints,eyeUv,named('eye',eyeTargets)),
+    mouth:geometry(mouthPoints,mouthUv,named('mouth',mouthTargets)),
+    ...Object.fromEntries(['Left','Right'].map(side=>[side+'Line',geometry(linePoints,linePoints.map(()=>[0,0]),named(side,{
       close:linePoints.map(()=>[0,.1,0]),smile:linePoints.map(()=>[0,.2,0]),
-    }),
+    }))])),
   };
 }
 function fixture(shared=geometries()){
@@ -65,20 +68,21 @@ function fixture(shared=geometries()){
   const skin=geometry([[-3,0,-1],[3,0,-1],[-3,4,-1],[3,0,-1],[3,4,-1],[-3,4,-1]],Array.from({length:6},()=>[0,0]),{});
   add('Face',new Mesh(skin,new MeshBasicMaterial()));
   const mouth=add('Mouth',new Mesh(shared.mouth,new MeshBasicMaterial()));
-  const lineL=add('LeftEyeWhiteLine',new Mesh(shared.line,new MeshBasicMaterial()));
-  const lineR=add('RightEyeWhiteLine',new Mesh(shared.line,new MeshBasicMaterial()));
+  const lineL=add('LeftEyeWhiteLine',new Mesh(shared.LeftLine,new MeshBasicMaterial()));
+  const lineR=add('RightEyeWhiteLine',new Mesh(shared.RightLine,new MeshBasicMaterial()));
   lineL.visible=false;lineR.visible=false;
   for(const [side,x] of [['Left',1],['Right',-1]]){
     const parent=add(`${side}Eye_Root`,new Group());parent.position.set(x,2,.1);
     const child=add(`${side}Eye2`,new Group(),parent);child.position.set(.02,0,.03);
   }
   const morphPoses=['Open','Close','CloseSmile','WideOpen','Sad'].map((name,i)=>({name:`eye/${name}`,targets:{
-    Eye_Around:{[['open','close','smile','wide','sad'][i]]:1},
-    LeftEyeWhiteLine:name==='Close'?{close:1}:name==='CloseSmile'?{smile:1}:{},
-    RightEyeWhiteLine:name==='Close'?{close:1}:name==='CloseSmile'?{smile:1}:{},
+    Eye_Around:{[sourceName('eye',['open','close','smile','wide','sad'][i])]:1},
+    LeftEyeWhiteLine:named('Left',name==='Close'?{close:1}:name==='CloseSmile'?{smile:1}:{}),
+    RightEyeWhiteLine:named('Right',name==='Close'?{close:1}:name==='CloseSmile'?{smile:1}:{}),
   }}));
-  morphPoses.push({name:'mouth/Smile',targets:{Mouth:{smile:1}}},{name:'mouth/A',targets:{Mouth:{a:1}}},
-    {name:'mouth/Sad',targets:{Mouth:{sad:1}}});
+  morphPoses.push({name:'mouth/Smile',targets:{Mouth:named('mouth',{smile:1})}},{name:'mouth/A',targets:{Mouth:named('mouth',{a:1})}},
+    {name:'mouth/O',targets:{Mouth:named('mouth',{o:1})}},
+    {name:'mouth/Sad',targets:{Mouth:named('mouth',{sad:1})}});
   const bindings=[];
   for(const side of ['Left','Right']){
     bindings.push({node:`${side}Eye2`,property:'position',default:[.02,0,.03],poses:[
@@ -92,7 +96,7 @@ function fixture(shared=geometries()){
     component:{morphPoses,behaviors:[{name:'LLAS.Face',parameters:{bindings}}]}}],
     getShaderRuntimes(material){return material.userData.__parameterizedShaderRuntimes??[];},
     resolveNode(role,name){assert.equal(role,'integrated');const n=nodes.get(name);assert.ok(n,name);return n;}};
-  const weight=(object,name,value)=>{const i=object.morphTargetDictionary[name];if(value!==undefined)object.morphTargetInfluences[i]=value;return object.morphTargetInfluences[i];};
+  const weight=(object,name,value)=>{const kind=object===eye?'eye':object===mouth?'mouth':object.name.startsWith('Left')?'Left':'Right';const i=object.morphTargetDictionary[sourceName(kind,name)];assert.notEqual(i,undefined,`Missing test channel ${name}`);if(value!==undefined)object.morphTargetInfluences[i]=value;return object.morphTargetInfluences[i];};
   return {character,root,nodes,eye,mouth,lineL,lineR,shared,weight};
 }
 function point(mesh,index){
@@ -117,8 +121,7 @@ test('published adapter needs only the standard context and returns null for boa
   assert.deepEqual(Object.keys(adapter).sort(),['apply','dispose','restore']);
   f.weight(f.eye,'close',.3);
   const parameters=Object.freeze({PARAM_EYE_L_OPEN:0,PARAM_MOUTH_OPEN_Y:.6,PARAM_TEAR:.4});
-  const status=adapter.apply(parameters,{time:1,delta:0});
-  assert.ok(status.unsupported.includes('PARAM_TEAR'));
+  adapter.apply(parameters,{time:1,delta:0});
   near(f.weight(f.mouth,'a'),.6);assert.equal(f.lineL.visible,true);
   adapter.restore();near(f.weight(f.eye,'close'),.3);
   f.weight(f.eye,'close',.7);
@@ -152,27 +155,61 @@ test('cheek runtime ownership is deduplicated, receives both source styles and r
   const count=calls.length;driver.dispose();assert.equal(calls.length,count);
 });
 
-test('absent cheek resources remain a visible limitation without rejecting the rest of the face',()=>{
+test('absent cheek resources preserve the rest of the face',()=>{
   const f=fixture(),driver=new LlasLive2dFace(f.character);
-  const status=driver.setParameters({PARAM_CHEEK:.5,PARAM_EYE_L_OPEN:0});
-  assert.ok(status.limitations.some(text=>text.includes('脸红纹理')));
+  driver.setParameters({PARAM_CHEEK:.5,PARAM_EYE_L_OPEN:0});
   driver.update();assert.equal(f.lineL.visible,true);driver.dispose();
 });
 
-test('negative closed mouth uses native lip shape without selecting the rest of Sad, and releases it when opening',()=>{
-  const f=fixture(),driver=new LlasLive2dFace(f.character);
-  driver.setParameters({PARAM_MOUTH_FORM_01:-1});driver.update();
-  assert.equal(f.weight(f.mouth,'mouth:negative'),1);
-  assert.equal(f.weight(f.mouth,'mouth:curve0'),0);
-  assert.equal(f.weight(f.eye,'brow:L:negative'),0);
-  assert.equal(f.weight(f.eye,'eye:L:Close'),0);
-  driver.setParameters({PARAM_MOUTH_FORM_01:-.6,PARAM_MOUTH_OPEN_Y:.5});driver.update();
-  near(f.weight(f.mouth,'mouth:negative'),.5);
-  driver.setParameters({PARAM_MOUTH_FORM_01:-1,PARAM_MOUTH_OPEN_Y:1});driver.update();
-  assert.equal(f.weight(f.mouth,'mouth:negative'),0);
-  driver.setParameters({PARAM_MOUTH_FORM_01:.5});driver.update();
-  assert.equal(f.weight(f.mouth,'mouth:negative'),0);
+test('closed frown retains closure and opens continuously without moving the eyes',()=>{
+  const f=fixture(),driver=new LlasLive2dFace(f.character);driver.update();
+  const eyes=Array.from({length:12},(_,i)=>point(f.eye,i));
+  for(const form of [-1,-.5,0,.5,1]){
+    driver.setParameters({PARAM_MOUTH_FORM_01:form,PARAM_MOUTH_OPEN_Y:0});driver.update();
+    near(f.weight(f.mouth,'a'),0);near(f.weight(f.mouth,'o'),0);
+    nearArray(point(f.mouth,0),point(f.mouth,3));nearArray(point(f.mouth,2),point(f.mouth,4));
+    assert.ok(point(f.mouth,1)[1]>point(f.mouth,5)[1],'upper and lower surface must not swap');
+    const middle=(point(f.mouth,1)[1]+point(f.mouth,5)[1])/2,ends=(point(f.mouth,0)[1]+point(f.mouth,2)[1])/2;
+    if(form===-1)assert.ok(middle>ends,'negative FORM must produce downturned corners');
+    if(form===1)assert.ok(middle<ends,'positive FORM must produce upturned corners');
+    for(let i=0;i<12;i++)nearArray(point(f.eye,i),eyes[i]);
+    let previous=Array.from({length:6},(_,i)=>point(f.mouth,i));
+    for(let step=1;step<=100;step++){
+      driver.setParameters({PARAM_MOUTH_FORM_01:form,PARAM_MOUTH_OPEN_Y:step/100});driver.update();
+      const current=Array.from({length:6},(_,i)=>point(f.mouth,i));
+      for(let i=0;i<6;i++)assert.ok(Math.hypot(...current[i].map((v,k)=>v-previous[i][k]))<.01,'opening must stay continuous');
+      assert.ok(current.flat().every(Number.isFinite));previous=current;
+    }
+    assert.ok(point(f.mouth,0)[1]>point(f.mouth,3)[1]);
+  }
   driver.dispose();
+});
+
+test('negative opening blends authored A and O while preserving O upper/lower arcs and depth',()=>{
+  const f=fixture(),driver=new LlasLive2dFace(f.character);
+  for(const open of [0,.1,.5,.8,1])for(const form of [-1,-.4,0,.6,1]){
+    driver.setParameters({PARAM_MOUTH_OPEN_Y:open,PARAM_MOUTH_FORM_01:form});driver.update();
+    const roundness=open*Math.max(0,-form);
+    near(f.weight(f.mouth,'a'),open*(1-roundness));near(f.weight(f.mouth,'o'),open*roundness);
+    near(f.weight(f.mouth,'a')+f.weight(f.mouth,'o'),open);
+    if(!roundness)for(const [name,i]of Object.entries(f.mouth.morphTargetDictionary))if(name.startsWith('roundMouth:'))near(f.mouth.morphTargetInfluences[i],0);
+  }
+  driver.setParameters({PARAM_MOUTH_OPEN_Y:1,PARAM_MOUTH_FORM_01:-1});driver.update();
+  const original=f.shared.mouth.attributes.position,rounded=f.shared.mouth.morphAttributes.position.find(a=>a.name===sourceName('mouth','o'));
+  for(let i=0;i<6;i++){
+    const p=new Vector3().fromBufferAttribute(original,i).add(new Vector3().fromBufferAttribute(rounded,i));
+    nearArray(point(f.mouth,i),[p.x*.5,1+(p.y-1)*.5,p.z]);
+  }
+  assert.ok(point(f.mouth,1)[1]>point(f.mouth,0)[1],'rounded upper lip arches upward');
+  assert.ok(point(f.mouth,5)[1]<point(f.mouth,3)[1],'rounded lower lip arches downward');
+  // A poisoned O geometry must be unreachable when closed or at nonnegative FORM.
+  const other=fixture(),o=other.shared.mouth.morphAttributes.position.find(a=>a.name===sourceName('mouth','o'));o.array.fill(100);
+  const second=new LlasLive2dFace(other.character);
+  for(const [open,form]of [[0,-1],[0,-.4],[.4,0],[1,.8]]){
+    for(const d of [driver,second]){d.setParameters({PARAM_MOUTH_OPEN_Y:open,PARAM_MOUTH_FORM_01:form});d.update();}
+    for(let i=0;i<6;i++)nearArray(point(f.mouth,i),point(other.mouth,i));
+  }
+  driver.dispose();second.dispose();
 });
 
 test('combined positive mouth form and scale cannot over-expand the stationary seam transition',()=>{
@@ -211,12 +248,12 @@ test('direct driver repeats a frame without accumulating gaze, companion TRS or 
 });
 
 test('external Morph ownership replaces old face values and preserves an unbound channel changed during rendering',()=>{
-  const f=fixture();f.weight(f.eye,'close',.8);f.weight(f.mouth,'a',.9);f.weight(f.eye,'unrelated',.25);
+  const f=fixture();f.weight(f.eye,'close',.8);f.weight(f.mouth,'a',.9);f.weight(f.mouth,'o',.45);f.weight(f.eye,'unrelated',.25);
   const driver=new LlasLive2dFace(f.character);driver.setParameters({PARAM_MOUTH_OPEN_Y:.3});driver.update();
-  assert.equal(f.weight(f.eye,'close'),0);near(f.weight(f.mouth,'a'),.3);
+  assert.equal(f.weight(f.eye,'close'),0);near(f.weight(f.mouth,'a'),.3);near(f.weight(f.mouth,'o'),0);
   near(f.weight(f.eye,'unrelated'),.25);
   f.weight(f.eye,'unrelated',.7);driver.beginFrame();
-  near(f.weight(f.eye,'unrelated'),.7);near(f.weight(f.eye,'close'),.8);near(f.weight(f.mouth,'a'),.9);
+  near(f.weight(f.eye,'unrelated'),.7);near(f.weight(f.eye,'close'),.8);near(f.weight(f.mouth,'a'),.9);near(f.weight(f.mouth,'o'),.45);
   driver.dispose();
 });
 
@@ -237,7 +274,7 @@ test('dispose restores original geometry and dictionaries, latest underlying wei
     eyeDictionary:f.eye.morphTargetDictionary,mouthDictionary:f.mouth.morphTargetDictionary};
   const driver=new LlasLive2dFace(f.character);
   assert.notEqual(f.eye.geometry,original.eyeGeometry);assert.notEqual(f.mouth.geometry,original.mouthGeometry);
-  f.weight(f.eye,'close',.4);f.weight(f.mouth,'a',.6);f.weight(f.eye,'unrelated',.7);
+  f.weight(f.eye,'close',.4);f.weight(f.mouth,'a',.6);f.weight(f.mouth,'o',.35);f.weight(f.eye,'unrelated',.7);
   const iris=f.nodes.get('LeftEye_Root'),companion=f.nodes.get('LeftEye2');
   iris.position.set(1.1,2.2,.3);iris.scale.set(1.2,.9,1.1);companion.position.set(.04,.08,.02);
   f.lineL.visible=true;f.lineR.visible=false;
@@ -246,7 +283,7 @@ test('dispose restores original geometry and dictionaries, latest underlying wei
     PARAM_EYE_BALL_X:.8,PARAM_EYE_SCALE:1});driver.update();driver.dispose();
   assert.equal(f.eye.geometry,original.eyeGeometry);assert.equal(f.mouth.geometry,original.mouthGeometry);
   assert.equal(f.eye.morphTargetDictionary,original.eyeDictionary);assert.equal(f.mouth.morphTargetDictionary,original.mouthDictionary);
-  near(f.weight(f.eye,'close'),.4);near(f.weight(f.mouth,'a'),.6);near(f.weight(f.eye,'unrelated'),.7);
+  near(f.weight(f.eye,'close'),.4);near(f.weight(f.mouth,'a'),.6);near(f.weight(f.mouth,'o'),.35);near(f.weight(f.eye,'unrelated'),.7);
   nearArray(iris.position.toArray(),expected.iris);nearArray(iris.scale.toArray(),expected.scale);
   nearArray(companion.position.toArray(),expected.companion);assert.equal(f.lineL.visible,true);assert.equal(f.lineR.visible,false);
   const once=state(f);driver.dispose();assert.deepEqual(state(f),once);
@@ -280,24 +317,38 @@ test('two drivers sharing published geometries keep derived geometry, weights an
   db.dispose();assert.equal(b.eye.geometry,shared.eye);
 });
 
-test('negative brow form keeps native reverse curvature and depth but not native whole-region motion or eye changes',()=>{
-  const f=fixture(),driver=new LlasLive2dFace(f.character);driver.setParameters({});driver.update();
+test('negative brow form reverses curvature while preserving width, depth and the other face regions',()=>{
+  const f=fixture(),driver=new LlasLive2dFace(f.character);driver.update();
   const neutral=Array.from({length:12},(_,i)=>point(f.eye,i));
-  driver.setParameters({PARAM_BROW_L_FORM:-1});driver.update();
-  const changed=Array.from({length:12},(_,i)=>point(f.eye,i));
-  const mean=(points,axis)=>points.reduce((sum,p)=>sum+p[axis],0)/points.length;
-  for(let axis=0;axis<3;axis++)near(mean(changed.slice(0,3),axis),mean(neutral.slice(0,3),axis));
-  assert.ok(neutral[1][1]>(neutral[0][1]+neutral[2][1])/2);
-  assert.ok(changed[1][1]<(changed[0][1]+changed[2][1])/2);
-  near(changed[0][1],changed[2][1]); // Native Sad's added screen rotation is removed.
-  near(changed[1][2],.02);near(changed[0][2],-.01);near(changed[2][2],-.01);
-  for(let i=3;i<12;i++)nearArray(changed[i],neutral[i]);
-  const once=state(f);driver.update();assert.deepEqual(state(f),once);
-  driver.setParameters({PARAM_BROW_R_FORM:-1});driver.update();
-  for(let i=0;i<6;i++)nearArray(point(f.eye,i),neutral[i]);
-  assert.ok(point(f.eye,7)[1]<(point(f.eye,6)[1]+point(f.eye,8)[1])/2);
-  for(let i=9;i<12;i++)nearArray(point(f.eye,i),neutral[i]);
+  for(const [side,ids,other] of [['L',[0,1,2],[3,4,5,6,7,8,9,10,11]],['R',[6,7,8],[0,1,2,3,4,5,9,10,11]]]){
+    driver.setParameters({[`PARAM_BROW_${side}_FORM`]:-1});driver.update();
+    const changed=ids.map(i=>point(f.eye,i));
+    assert.ok(changed[1][1]<(changed[0][1]+changed[2][1])/2);
+    near(Math.abs(changed[0][0]-changed[2][0]),Math.abs(neutral[ids[0]][0]-neutral[ids[2]][0]));
+    for(const i of ids){near(point(f.eye,i)[0],neutral[i][0]);near(point(f.eye,i)[2],neutral[i][2]);}
+    for(const i of other)nearArray(point(f.eye,i),neutral[i]);
+    const once=state(f);driver.update();assert.deepEqual(state(f),once);
+  }
   driver.dispose();
+});
+
+test('missing or poisoned emotional Morph recipes cannot change parameter geometry or companions',()=>{
+  const a=fixture(),b=fixture(),c=fixture();
+  b.character.parts[0].component.morphPoses=[];
+  for(const pose of c.character.parts[0].component.morphPoses)pose.targets={Eye_Around:{unrelated:123},Mouth:{unrelated:-99}};
+  const drivers=[a,b,c].map(f=>new LlasLive2dFace(f.character));
+  for(const parameters of [{},{PARAM_BROW_L_FORM:-1,PARAM_MOUTH_FORM_01:-1},{PARAM_EYE_L_OPEN:.3,PARAM_EYE_R_SMILE:.7,PARAM_EYE_R_OPEN:.2,PARAM_MOUTH_OPEN_Y:.4,PARAM_MOUTH_FORM_01:-.6}]){
+    for(const d of drivers){d.setParameters(parameters);d.update();}
+    for(const f of [b,c]){assert.deepEqual(state(f),state(a));for(const [ma,mb]of [[a.eye,f.eye],[a.mouth,f.mouth]])for(let i=0;i<ma.geometry.attributes.position.count;i++)nearArray(point(ma,i),point(mb,i));}
+  }
+  for(const d of drivers)d.dispose();
+});
+
+test('Main and Outline receive identical source and derived Morph values and restore their own underlays',()=>{
+  const f=fixture(),pairs=[f.eye,f.mouth,f.lineL,f.lineR].map(source=>{const pass=source.clone();pass.morphTargetInfluences=[...source.morphTargetInfluences];pass.userData.__parameterizedPassObject=true;f.root.add(pass);source.morphTargetInfluences.fill(.2);pass.morphTargetInfluences.fill(.6);return [source,pass];});
+  const driver=new LlasLive2dFace(f.character);driver.setParameters({PARAM_EYE_L_OPEN:0,PARAM_EYE_R_OPEN:.2,PARAM_EYE_R_SMILE:.6,PARAM_BROW_L_FORM:-.8,PARAM_MOUTH_OPEN_Y:.3,PARAM_MOUTH_FORM_01:-.7});driver.update();
+  for(const [source,pass]of pairs)for(const [name,index]of Object.entries(source.morphTargetDictionary))if(name!=='unrelated')near(source.morphTargetInfluences[index],pass.morphTargetInfluences[index]);
+  driver.dispose();for(const [source,pass]of pairs){assert.ok(source.morphTargetInfluences.every(v=>v===.2));assert.ok(pass.morphTargetInfluences.every(v=>v===.6));}
 });
 
 test('brows remain in front of a sloping face through continuous angle/form/position input and native switching',()=>{

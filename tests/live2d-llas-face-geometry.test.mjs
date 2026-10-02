@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BufferGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial } from 'three';
-import { FaceMorphWorkspace, morphVector, maskedDifference, connectedVertices, alignedShapeDifference, mouthSupportWeights, mouthChannels, triangleDepthGap } from '../packages/llas_runtime/adapters/llas-face-geometry.js';
+import { FaceMorphWorkspace, maskedDifference, connectedVertices, browCurvature, planarChannels, mouthSupportWeights, mouthChannels, triangleDepthGap } from '../packages/llas_runtime/adapters/llas-face-geometry.js';
 
 function fixture() {
   const geometry = new BufferGeometry();
@@ -21,7 +21,7 @@ test('derived face channels share passes but not another instance, then restore'
   const {root,mesh,pass,geometry} = fixture();
   const other = mesh.clone(), originalWeights = mesh.morphTargetInfluences;
   const work = new FaceMorphWorkspace(root,mesh,{ Float32BufferAttribute });
-  const delta = morphVector(mesh,{original:1});
+  const delta = Float32Array.from(mesh.geometry.morphAttributes.position[0].array);
   work.add('left',maskedDifference(delta,new Float32Array(18),[1,1,1,0,0,0]));
   assert.equal(geometry.morphAttributes.position.length,1);
   assert.equal(mesh.geometry.morphAttributes.position.length,2);
@@ -44,7 +44,7 @@ test('derived face channels share passes but not another instance, then restore'
 test('topology and regional difference preserve independent left/right support',()=>{
   const {mesh,geometry} = fixture();
   assert.deepEqual(connectedVertices(geometry),[[0,1,2],[3,4,5]]);
-  const values = morphVector(mesh,{original:-.5});
+  const values = Float32Array.from(mesh.geometry.morphAttributes.position[0].array,v=>v*-.5);
   const left = maskedDifference(values,new Float32Array(18),[1,1,1,0,0,0]);
   assert.equal(left[1],-.5);assert.equal(left[4],-1);assert.equal(left[7],-1.5);
   assert.ok(left.subarray(9).every(v=>v===0));
@@ -63,41 +63,28 @@ test('brow depth uses interior face peaks and edge crossings, independently of w
   const scale=points=>points.map(p=>({x:p.x*.01,y:p.y*.01,z:p.z*.01}));
   near(triangleDepthGap(scale(brow),scale(skin)),.004);
 });
-function alignedFixture({reverse=false}={}){
-  const points=[[-1,0,0],[0,.4,0],[1,0,0],[3,1,0],[4,1,0],[3,2,0]];
-  const geometry=new BufferGeometry();
+test('brow curvature separates bend from offset and linear slant with nonuniform samples',()=>{
+  const geometry=new BufferGeometry(),xs=[-1,-.7,-.1,.3,1],curve=.17;
+  const points=xs.map(x=>[x,3+.43*x+2*curve*(1-x*x),.04*x]);
   geometry.setAttribute('position',new Float32BufferAttribute(points.flat(),3));
-  geometry.setAttribute('normal',new Float32BufferAttribute(points.flatMap(()=>[0,0,1]),3));
-  const from=new Float32Array(18),to=new Float32Array(18),fromNormals=new Float32Array(18),toNormals=new Float32Array(18);
-  const mask=new Uint8Array([1,1,1,0,0,0]),angle=.31,c=Math.cos(angle),s=Math.sin(angle),cy=.4/3;
-  for(let i=0;i<6;i++){
-    const [x,y]=points[i],localY=reverse&&i<3?cy-y:y-cy;
-    to[i*3]=c*x-s*localY+2-x;
-    to[i*3+1]=s*x+c*localY+cy-3-y;
-    to[i*3+2]=.7+(reverse&&i<3?(i===1?.02:-.01):0);
-    if(reverse&&i<3){toNormals[i*3]=-s*.1;toNormals[i*3+1]=c*.1;toNormals[i*3+2]=-.005;}
-  }
-  return {geometry,mask,from,to,fromNormals,toNormals,points};
-}
-
-test('aligned native shape difference removes rigid translation and screen rotation',()=>{
-  const f=alignedFixture(),result=alignedShapeDifference(f.geometry,f.mask,f.from,f.to,f.fromNormals,f.toNormals);
-  for(const value of result.positions)near(value,0);
-  for(const value of result.normals)near(value,0);
+  const mask=new Uint8Array(xs.length).fill(1),offset=new Float32Array(xs.length*3);
+  near(browCurvature(geometry,mask,offset),curve);
+  for(let i=0;i<xs.length;i++)offset[i*3+1]=7-.29*xs[i];
+  near(browCurvature(geometry,mask,offset),curve);
+  geometry.dispose();
 });
 
-test('aligned native shape difference preserves reverse bend, local depth and normals only inside its mask',()=>{
-  const f=alignedFixture({reverse:true}),result=alignedShapeDifference(f.geometry,f.mask,f.from,f.to,f.fromNormals,f.toNormals);
-  const changed=f.points.map((p,i)=>p.map((v,k)=>v+result.positions[i*3+k]));
-  for(let axis=0;axis<3;axis++){
-    near(changed.slice(0,3).reduce((sum,p)=>sum+p[axis],0),f.points.slice(0,3).reduce((sum,p)=>sum+p[axis],0));
-  }
+test('derived negative brow bend preserves matching upper/lower thickness and local depth',()=>{
+  const geometry=new BufferGeometry(),points=[];
+  for(const y of [0,.06])for(const x of [-1,0,1])points.push([x,y+.2*(1-x*x),.03*x]);
+  geometry.setAttribute('position',new Float32BufferAttribute(points.flat(),3));
+  geometry.setAttribute('normal',new Float32BufferAttribute(points.flatMap(()=>[0,0,1]),3));
+  const mask=new Uint8Array(points.length).fill(1),delta=planarChannels(geometry,mask,[0,.13,0],new Float32Array(points.length*3)).curve;
+  const changed=points.map((p,i)=>p.map((v,k)=>v-.3*delta[i*3+k]));
   assert.ok(changed[1][1]<(changed[0][1]+changed[2][1])/2);
-  near(changed[0][1],changed[2][1]);
-  near(changed[0][2],-.01);near(changed[1][2],.02);near(changed[2][2],-.01);
-  for(let i=0;i<3;i++){near(result.normals[i*3],0);near(result.normals[i*3+1],.1);near(result.normals[i*3+2],-.005);}
-  assert.ok(result.positions.subarray(9).every(value=>value===0));
-  assert.ok(result.normals.subarray(9).every(value=>value===0));
+  for(let i=0;i<3;i++)near(changed[i+3][1]-changed[i][1],.06);
+  for(let i=0;i<points.length;i++){near(changed[i][0],points[i][0]);near(changed[i][2],points[i][2]);}
+  geometry.dispose();
 });
 
 function mouthFixture(){
@@ -109,7 +96,7 @@ function mouthFixture(){
     opening.push(0,row===0?0:row===2?.000001:.2,0);
     lip.push(row===2?1:0);
   }
-  // A disconnected moving island has no contour anchor and must not deform.
+  // A detached mouth interior has no fixed boundary; it must follow the lip warp.
   points.push(4,0,0,5,0,0,4,1,0);uv.push(0,0,0,0,0,0);
   opening.push(0,.1,0,0,.1,0,0,.1,0);lip.push(0,0,0);
   const indices=[];
@@ -129,7 +116,7 @@ test('mouth topology support fixes the seam, reaches tiny-moving lip anchors and
   assert.deepEqual([...weights.slice(6,9)],[1,1,1]);
   assert.ok(weights.slice(3,6).every(value=>value>0&&value<1));
   assert.ok(weights.every(value=>Number.isFinite(value)&&value>=0&&value<=1));
-  assert.deepEqual([...weights.slice(9)],[0,0,0]);
+  assert.deepEqual([...weights.slice(9)],[1,1,1]);
   // Support depends on topology and fixed endpoints, not the A delta magnitude.
   const larger=opening.map(value=>value*100);
   assert.deepEqual(mouthSupportWeights(geometry,larger,lip),weights);
@@ -173,20 +160,34 @@ test('disconnected UV islands sharing closed lip positions receive identical der
   geometry.dispose();
 });
 
-test('negative mouth channel preserves authored placement and depth of the lip and cavity together',()=>{
-  const {geometry,opening}=mouthFixture(),sad=new Float32Array(opening.length),normals=new Float32Array(opening.length);
-  // An authored inner cavity can move differently from the lip. Stripping
-  // rigid placement from only one surface makes an otherwise valid blend tear.
-  for(let i=3;i<12;i++){
-    sad[i*3]=.01*(i%3-1);sad[i*3+1]=i<9?-.03:-.05;sad[i*3+2]=i<9?.02:.01;
-    normals[i*3+1]=.15;normals[i*3+2]=-.01;
-  }
-  const {channels,negativeNormals}=mouthChannels(geometry,opening,sad,normals);
-  assert.deepEqual(channels.negative,sad);assert.notEqual(channels.negative,sad);
-  assert.deepEqual(negativeNormals,normals);assert.notEqual(negativeNormals,normals);
-  assert.ok(channels.negative.slice(0,9).every(value=>value===0));
-  const noNormals=mouthChannels(geometry,opening,sad);
-  assert.ok(noNormals.negativeNormals.every(value=>value===0));
-  assert.equal(mouthChannels(geometry,opening).channels.negative,undefined);
+test('detached inner-mouth components follow deformation and UV-split skin does not become detached',()=>{
+  const {geometry,opening,lip}=mouthFixture(),p=geometry.attributes.position,uv=geometry.attributes.uv;
+  // One UV island shares the flexible skin and fixed outer edge, so its
+  // entire welded component still has a boundary. The detached triangle is
+  // duplicated in another UV island and must receive the same full warp.
+  const originals=[4,0,3,9,10,11],positions=[...p.array],uvs=[...uv.array],deltas=[...opening],mask=[...lip];
+  for(const i of originals){positions.push(p.getX(i),p.getY(i),p.getZ(i));uvs.push(.01,.02);deltas.push(...opening.slice(i*3,i*3+3));mask.push(0);}
+  geometry.setAttribute('position',new Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new Float32BufferAttribute(uvs,2));
+  geometry.setIndex([...geometry.index.array,12,13,14,15,16,17]);
+  const support=mouthSupportWeights(geometry,deltas,mask),{channels}=mouthChannels(geometry,deltas);
+  assert.ok(support[12]>0&&support[12]<1);assert.equal(support[13],0);
+  for(const i of [9,10,11,15,16,17]){assert.equal(support[i],1);near(channels.moveY[i*3+1],1);}
+  for(const [j,i]of originals.entries())for(const values of Object.values(channels))for(let axis=0;axis<3;axis++)near(values[(12+j)*3+axis],values[i*3+axis]);
+  for(const values of Object.values(channels))assert.ok(values.slice(0,9).every(v=>v===0),'the real fixed outer seam must stay fixed');
+  geometry.dispose();
+});
+
+test('each mouth phoneme retains its own stationary support without changing shared lip or outer seam constraints',()=>{
+  const {geometry,opening,lip}=mouthFixture(),rounded=opening.slice();
+  // Actual ch0210 has O-stationary skin/cavity points that move under A.
+  // A branch's harmonic support must not be reused for those O boundaries.
+  rounded.fill(0,4*3,4*3+3);
+  const a=mouthSupportWeights(geometry,opening,lip),o=mouthSupportWeights(geometry,rounded,lip);
+  const ac=mouthChannels(geometry,opening).channels,oc=mouthChannels(geometry,rounded).channels;
+  assert.ok(a[4]>0&&a[4]<1);assert.equal(o[4],0);
+  assert.ok(ac.moveY[4*3+1]>0);assert.equal(oc.moveY[4*3+1],0);
+  for(const i of [0,1,2]){assert.equal(a[i],0);assert.equal(o[i],0);}
+  for(const i of [6,7,8]){assert.equal(a[i],1);assert.equal(o[i],1);}
+  for(const i of [9,10,11]){assert.equal(a.internal[i],1);assert.equal(o.internal[i],1);}
   geometry.dispose();
 });

@@ -84,11 +84,27 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 
 当前适配器要求普通脸 `LLAS.Face` 声明，璃奈板模型返回 `null`，不使用普通脸适配路径。模型需要：
 
-- `Eye_Around`、`Mouth`：对应原脸部 Mesh，各自能解析为单个源 primitive。
+- `Eye_Around`、`Mouth`、`Face`、`LeftEyeWhiteLine`、`RightEyeWhiteLine`：对应原脸部 Mesh，各自能解析为单个源 primitive。`Face` 提供眉毛深度约束所需的面部表面。
 - `LeftEye_Root`、`RightEye_Root`、`LeftEye2`、`RightEye2`：用于眼球位移、缩放及局部基准测量。
-- `morphPoses` 中的 `eye/Open`、`eye/Close`、`eye/CloseSmile`、`eye/WideOpen`、`eye/Sad`，且含 `Eye_Around` 的 Morph 配方；以及 `mouth/A`、`mouth/Sad`，且含 `Mouth` 的配方。
-- 这些 Mesh 的位置、法线及 Morph 数据；适配器在加载时根据源几何划分眼、眉、眼皮、嘴部区域，构造额外变形通道，不只是混合用户可见的预组表情。
+- `LLAS.Face.parameters.bindings` 中的原生辅助属性绑定，供眼睛开合、笑眼和超开状态求值。
+- 相对 Morph、位置及 UV 数据。适配器按实际名称字典绑定下表中的底层通道；Morph 法线可选，缺少时沿用基础法线。必要通道缺失时加载报错，已声明的零位移通道有效。
 
-支持的输入包括左右眼开合/笑眼/眼皮、眼球 XY/缩放、左右眉 XY/角度/曲率、嘴开合/形状/纵向调整/缩放，以及两种脸红。具体参数名和当前映射范围见 [llas-live2d-parameters.js](../packages/llas_runtime/adapters/llas-live2d-parameters.js)。这些是跨媒介标定后的近似映射，不是 LLAS 原游戏表情算法；两种脸红合并为 LLAS 双颊纹理，额外眼型、独立高光和眼泪未映射。
+| Mesh | 底层 Morph | 用途 |
+| --- | --- | --- |
+| `Eye_Around` | `EyeBlendShape.eye_facial_001` | 闭眼 |
+| `Eye_Around` | `EyeBlendShape.eye_facial_005` | 笑眼闭合 |
+| `Eye_Around` | `EyeBlendShape.eye_facial_004` | 超开 |
+| `Mouth` | `MouthBlendShape.mouth_facial_001` | A 型张嘴 |
+| `Mouth` | `MouthBlendShape.mouth_facial_005` | O 型圆口 |
+| `LeftEyeWhiteLine` | `LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001`、`LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002` | 闭眼、笑眼睫毛高光 |
+| `RightEyeWhiteLine` | `RightEyeWhiteLineBlendShape.RightEye_LineWhite_001`、`RightEyeWhiteLineBlendShape.RightEye_LineWhite_002` | 闭眼、笑眼睫毛高光 |
 
-适配器保存并恢复它接管的 Morph、辅助 TRS 和显隐。运行时新增的 Morph 通道由它自己释放，无需写回 GLB。脸红通过 Shader 的包内接口控制，见 [Shader 数据接口](shader-data.md)。
+30 个普通脸的中性眼和闭嘴基准使用基础位置，即零位置 Morph 增量。运行时根据图集与连通结构划分区域：眼睛使用底层通道在眼区的增量；眉毛使用独立平移、旋转、曲率通道，负曲率结合本模型的中性上拱幅度计算。每侧眉在完成形变后依据 `Face` 表面整体调整深度。
+
+嘴部使用 A、O 两个底层形态，分别建立实例内形变支撑。A 分支包含宽高、位置、缩放和曲率；O 分支包含 XY 尺寸和纵向位置，口部 XY 缩放为 `0.5*min(1,scale)`。设开度为 `a`、嘴形为 `form`，圆口混合量 `r=a*max(0,-form)`；两分支在开度 `a` 下求出的完整增量分别乘 `1-r`、`r`。闭嘴曲率以本模型唇线为基准连续调整，开口时负嘴形逐渐转为小圆口。
+
+两分支各自保留源通道保持不动的外部接缝，重合的 UV 分裂顶点共用支撑权重，独立牙齿／口腔连通片随对应口部形变。辅助眼骨继续按原生属性绑定求值，眼球围绕各自的中性中心缩放。
+
+支持的输入包括左右眼开合/笑眼/眼皮、眼球 XY/缩放、左右眉 XY/角度/曲率、嘴开合/形状/纵向调整/缩放，以及两种脸红。具体参数名和当前映射范围见 [llas-live2d-parameters.js](../packages/llas_runtime/adapters/llas-live2d-parameters.js)。这些是跨媒介标定后的近似映射，不是 LLAS 原游戏表情算法；两种脸红合并为 LLAS 双颊纹理，额外眼型、独立高光和眼泪未映射。超出标定范围的输入按对应边界值处理；脸红需要模型与渲染模式提供可用脸红纹理，缺少时其余面部控制仍正常生效。
+
+适配器接管对应脸部原生通道前保存权重，再清除这些通道的贡献并应用参数结果；派生通道、辅助 TRS 和显隐也纳入同一恢复过程。Main／Outline 的权重分别写入和恢复，并共享实例内派生几何。运行时新增的 Morph 通道由它自己释放，无需写回 GLB。脸红通过 Shader 的包内接口控制，见 [Shader 数据接口](shader-data.md)。

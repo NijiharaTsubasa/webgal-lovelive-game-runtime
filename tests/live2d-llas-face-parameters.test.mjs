@@ -30,15 +30,12 @@ test('LLAS direct face controls have independent neutral eyes, brows, gaze and m
   for(const side of ['L','R'])for(const n of Object.values(value.brows[side]))near(n,0);
   assert.deepEqual(value.gaze,{x:0,y:0,scale:1});
   assert.deepEqual(value.mouth,{open:0,form:0,y:0,scale:1});
-  assert.deepEqual(value.unsupported,[]);
-  assert.ok(value.limitations.length>0);
 });
 
 test('every mapped facial channel responds at endpoints and intermediate values',()=>{
   for(const channel of channels)for(const input of [channel.min,(channel.min+channel.max)/2,channel.max]){
     const controls=llasFaceControls({[channel.id]:input});
     near(coordinate(controls,channel.path),channel.offset+channel.scale*input);
-    assert.deepEqual(controls.unsupported,[],channel.id);
   }
 });
 
@@ -77,7 +74,6 @@ test('eyelid line placement is independent from aperture, smile and the opposite
   near(value.eyes.L.lid,.042);near(value.eyes.R.lid,-.028);
   assert.equal(value.eyes.L.open,.3);assert.equal(value.eyes.R.open,1);
   assert.equal(value.eyes.L.smile,0);assert.equal(value.eyes.R.smile,.7);
-  assert.deepEqual(value.unsupported,[]);
 });
 
 test('mouth form, opening, position and size survive as separate controls',()=>{
@@ -119,13 +115,11 @@ test('non-finite supported values fail with the parameter ID, including values s
   assert.equal(llasFaceControls({PARAM_MOUTH_OPEN_Y:.5},{PARAM_MOUTH_OPEN_Y:NaN}).mouth.open,.5);
 });
 
-test('active unhandled facial fields remain diagnostic, while body and unchanged facial fields do not',()=>{
-  const input={PARAM_EYELID_L:.2,PARAM_EYE_FORM:-.6,PARAM_CHEEK:.8,PARAM_TEAR:0,
-    PARAM_MOUTH_OPEN_Y_MANUAL:.3,PARAM_EYE_BROWS:1,PARAM_BROW_UNKNOWN:.7,PARAM_ARM_L_01_001:25,
-    PARAM_MOUTH_OPEN_Y:.4,PARAM_EYE_HIGHLIGHT:.5};
-  assert.deepEqual(llasFaceControls(input,{PARAM_CHEEK:.8,PARAM_EYE_HIGHLIGHT:.5}).unsupported,
-    ['PARAM_EYE_FORM','PARAM_MOUTH_OPEN_Y_MANUAL','PARAM_EYE_BROWS','PARAM_BROW_UNKNOWN']);
-  assert.deepEqual(llasFaceControls({PARAM_CHEEK:5e-7}).unsupported,[]);
+test('unmapped facial and body fields do not alter mapped controls',()=>{
+  const input={PARAM_EYE_L_OPEN:.4,PARAM_MOUTH_OPEN_Y:.6};
+  assert.deepEqual(llasFaceControls({...input,PARAM_EYE_FORM:-.6,PARAM_TEAR:1,
+    PARAM_EYE_HIGHLIGHT:.5,PARAM_MOUTH_OPEN_Y_MANUAL:.3,PARAM_BROW_UNKNOWN:.7,
+    PARAM_ARM_L_01_001:25}),llasFaceControls(input));
 });
 
 test('mapping is pure and each character receives independent mutable result objects',()=>{
@@ -133,9 +127,9 @@ test('mapping is pure and each character receives independent mutable result obj
   const defaults=Object.freeze({PARAM_EYE_L_OPEN:.8});
   const a=llasFaceControls(input,defaults),b=llasFaceControls(input,defaults);
   assert.deepEqual(a,b);
-  a.eyes.L.open=0;a.brows.L.curve=100;a.gaze.x=100;a.mouth.open=0;a.unsupported.push('changed');
+  a.eyes.L.open=0;a.brows.L.curve=100;a.gaze.x=100;a.mouth.open=0;
   assert.equal(b.eyes.L.open,.8);near(b.brows.L.curve,.045);assert.equal(b.gaze.x,0);
-  assert.equal(b.mouth.open,.4);assert.deepEqual(b.unsupported,[]);assert.equal(b.cheek,.3);
+  assert.equal(b.mouth.open,.4);assert.equal(b.cheek,.3);
   assert.deepEqual(input,{PARAM_BROW_L_FORM:.5,PARAM_MOUTH_OPEN_Y:.4,PARAM_CHEEK:.3});
 });
 
