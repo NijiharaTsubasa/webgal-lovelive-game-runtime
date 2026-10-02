@@ -198,6 +198,72 @@
           }
         }
       ]
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-kozue-garupa-face",
+      "motionGroup": "hasunosora.kozue",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-tsuzuri-garupa-face",
+      "motionGroup": "hasunosora.tsuzuri",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-megumi-garupa-face",
+      "motionGroup": "hasunosora.megumi",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-kaho-garupa-face",
+      "motionGroup": "hasunosora.kaho",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-sayaka-garupa-face",
+      "motionGroup": "hasunosora.sayaka",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-rurino-garupa-face",
+      "motionGroup": "hasunosora.rurino",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-ginko-garupa-face",
+      "motionGroup": "hasunosora.ginko",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-kosuzu-garupa-face",
+      "motionGroup": "hasunosora.kosuzu",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-hime-garupa-face",
+      "motionGroup": "hasunosora.hime",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-izumi-garupa-face",
+      "motionGroup": "hasunosora.izumi",
+      "script": "adapters/hasunosora-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "hasunosora-ceras-garupa-face",
+      "motionGroup": "hasunosora.ceras",
+      "script": "adapters/hasunosora-live2d-face.js"
     }
   ]
 }

@@ -5,6 +5,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [LLAS 表情接口](llas-face.md) | 普通脸的辅助 TRS/显隐、璃奈板 Morph 信号、参数表情适配所需的模型数据 |
+| [莲之空参数表情](hasunosora-face.md) | 角色兼容域、底层 Morph 与参数控制能力 |
 | [Garupa 体型接口](garupa-avatar-scaler.md) | 头部体型配置、身体节点绑定和原坐标系到归一化骨架的投影 |
 | [Shader 数据接口](shader-data.md) | glTF 材质与顶点数据、LLAS 私有关键字及包内脸红控制 |
 
