@@ -6,12 +6,11 @@ import {
   regionBounds,
   planarChannels,
   mouthChannels,
-  faceRegionDepthConstraint,
+  browDepthConstraint,
   browCurvature,
 } from './llas-face-geometry.js';
 import { llasFaceControls } from './llas-live2d-parameters.js';
 import { bindLlasFaceChannels } from './llas-face-channels.js';
-import { createEyelidTravelConstraint } from './llas-eyelid-line.js';
 
 // LLAS-specific authored rig. Native LLAS.Face remains unchanged; the host
 // relinquishes its original expression writer while this driver is installed.
@@ -182,26 +181,14 @@ export class LlasLive2dFace {
       for (let i = 0; i < regions[side].brow.length; i++)
         if (regions[side].brow[i]) depth[i * 3 + 2] = 1;
       this.eyeWork.add(`brow:${side}:depth`, depth);
-      const lid = new Float32Array(open.length);
-      for (let i = 0; i < regions[side].lid.length; i++)
-        if (regions[side].lid[i]) lid[i * 3 + 1] = 1;
-      this.eyeWork.add(`eye:${side}:lid`, lid);
-      const lidDepth = new Float32Array(open.length);
-      for (let i = 0; i < regions[side].lid.length; i++)
-        if (regions[side].lid[i]) lidDepth[i * 3 + 2] = 1;
-      this.eyeWork.add(`eye:${side}:lidDepth`, lidDepth);
     }
-    this.browDepth = faceRegionDepthConstraint(
+    this.browDepth = browDepthConstraint(
       this.eyeMesh,
       this.resolveMesh('Face'),
       regions,
       open,
       THREE
     );
-    this.lidDepth = faceRegionDepthConstraint(
-      this.eyeMesh, this.resolveMesh('Face'), regions, open, THREE, 'lid'
-    );
-    this.lidTravel = createEyelidTravelConstraint(this.eyeMesh, regions);
     this.mouthWork = new FaceMorphWorkspace(this.root, this.mouthMesh, THREE);
     this.workspaces.push(this.mouthWork);
     const mouth = mouthChannels(
@@ -321,22 +308,9 @@ export class LlasLive2dFace {
       }
     }
     this.eyeWork.write(weights);
-    const lidBaseDepth = {};
-    // Measure separation after the native open/smile shapes, before adding
-    // line motion. Its painted shadow uses the very same translation.
-    for (const side of ['L', 'R']) {
-      const shift = controls.eyes[side].lid * this.eyeDistance;
-      weights[`eye:${side}:lid`] = shift < 0 ? Math.max(shift, -this.lidTravel(side))
-        : shift > 0 ? Math.min(shift, this.lidTravel(side, true)) : 0;
-      if (weights[`eye:${side}:lid`]) lidBaseDepth[side] = this.lidDepth(side);
-    }
-    this.eyeWork.write(weights);
     // The surface query must see the complete XY shape with zero depth lift;
     // applying the returned lift afterward prevents frame-to-frame feedback.
     for (const side of ['L', 'R']) weights[`brow:${side}:depth`] = this.browDepth(side);
-    for (const side of ['L', 'R'])
-      if (weights[`eye:${side}:lid`])
-        weights[`eye:${side}:lidDepth`] = Math.max(0, this.lidDepth(side) - lidBaseDepth[side]);
     this.eyeWork.write(weights);
   }
 

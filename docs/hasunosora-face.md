@@ -16,7 +16,7 @@
 
 EyeShadow 表达眼皮线在眼白上的阴影，通过与 Face 配套的眼睑 Morph 跟随眼型变化。
 
-Face 中的眼皮褶线及下方皮肤着色区域随眼型 Morph 配套形变。独立调整褶线位置的 `PARAM_EYELID_L/R` 暂未映射。
+Face 中的眼皮褶线及下方皮肤着色区域随眼型 Morph 配套形变。独立双眼皮参数 `PARAM_EYELID_L/R` 在实现过程中表现出与视觉收益不相称的复杂度；考虑到多角色同屏时的性能开销风险，暂不映射。
 
 眼睑使用 `Eyelids_Normal`、`Eyelids_Close_L/R`、`Eyelids_SmileB_L/R`、`Eyelids_Smile`、`Eyelids_Open`，同时作用于 Face 和 EyeShadow。半开笑眼的 `Eyelids_Smile` 补充形变仅在这两类网格均具备该通道时叠加；缺失时共同使用 `Eyelids_Close_L/R` 与 `Eyelids_SmileB_L/R` 的开闭混合。嘴部以角色中性闭口为基线，使用 `Mouth_A`、`Mouth_O`、`Mouth_cornerUP_L/R`、`Mouth_cornerDown_L/R`、`Mouth_UP`、`Mouth_Down`；`Up`/`UP` 两种源名称分别绑定。缺少 `Mouth_O` 的模型保留 `Mouth_A` 张口开度，圆口形状受源模型能力限制。中性眉使用所属组的配方，独立平移、旋转和曲率在此基础上计算。
 

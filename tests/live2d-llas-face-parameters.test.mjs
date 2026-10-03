@@ -8,7 +8,6 @@ const channels=[
   ...['L','R'].flatMap(side=>[
     {id:`PARAM_EYE_${side}_OPEN`,path:['eyes',side,'open'],min:0,max:1.5,scale:1,offset:0},
     {id:`PARAM_EYE_${side}_SMILE`,path:['eyes',side,'smile'],min:0,max:1,scale:1,offset:0},
-    {id:`PARAM_EYELID_${side}`,path:['eyes',side,'lid'],min:-1,max:1,scale:.07,offset:0},
     ...['X','Y','ANGLE','FORM'].map(kind=>({
       id:`PARAM_BROW_${side}_${kind}`,path:['brows',side,{X:'x',Y:'y',ANGLE:'angle',FORM:'curve'}[kind]],
       min:-1,max:1,offset:0,
@@ -26,7 +25,7 @@ const channels=[
 
 test('LLAS direct face controls have independent neutral eyes, brows, gaze and mouth',()=>{
   const value=llasFaceControls({});
-  assert.deepEqual(value.eyes,{L:{open:1,smile:0,lid:0},R:{open:1,smile:0,lid:0}});
+  assert.deepEqual(value.eyes,{L:{open:1,smile:0},R:{open:1,smile:0}});
   for(const side of ['L','R'])for(const n of Object.values(value.brows[side]))near(n,0);
   assert.deepEqual(value.gaze,{x:0,y:0,scale:1});
   assert.deepEqual(value.mouth,{open:0,form:0,y:0,scale:1});
@@ -42,7 +41,7 @@ test('every mapped facial channel responds at endpoints and intermediate values'
 test('left and right eye opening and smile remain independent, including over-open eyes',()=>{
   const value=llasFaceControls({PARAM_EYE_L_OPEN:.25,PARAM_EYE_R_OPEN:1.4,
     PARAM_EYE_L_SMILE:.7,PARAM_EYE_R_SMILE:.1});
-  assert.deepEqual(value.eyes,{L:{open:.25,smile:.7,lid:0},R:{open:1.4,smile:.1,lid:0}});
+  assert.deepEqual(value.eyes,{L:{open:.25,smile:.7},R:{open:1.4,smile:.1}});
   const changed=llasFaceControls({PARAM_EYE_L_OPEN:.25,PARAM_EYE_R_OPEN:1.4,
     PARAM_EYE_L_SMILE:0,PARAM_EYE_R_SMILE:.1});
   assert.deepEqual(changed.eyes.R,value.eyes.R);
@@ -69,11 +68,14 @@ test('gaze directions and iris size do not alter aperture or smile controls',()=
   assert.deepEqual(value.eyes,llasFaceControls({}).eyes);
 });
 
-test('eyelid line placement is independent from aperture, smile and the opposite side',()=>{
-  const value=llasFaceControls({PARAM_EYELID_L:.6,PARAM_EYELID_R:-.4,PARAM_EYE_L_OPEN:.3,PARAM_EYE_R_SMILE:.7});
-  near(value.eyes.L.lid,.042);near(value.eyes.R.lid,-.028);
-  assert.equal(value.eyes.L.open,.3);assert.equal(value.eyes.R.open,1);
-  assert.equal(value.eyes.L.smile,0);assert.equal(value.eyes.R.smile,.7);
+test('unmapped eyelid parameters preserve aperture and smile controls',()=>{
+  const params={PARAM_EYE_L_OPEN:.3,PARAM_EYE_R_SMILE:.7};
+  const expected=llasFaceControls(params);
+  for(const value of [-1,-.4,.6,1]){
+    const eyelids={PARAM_EYELID_L:value,PARAM_EYELID_R:-value};
+    assert.deepEqual(llasFaceControls({...params,...eyelids}),expected);
+    assert.deepEqual(llasFaceControls(params,eyelids),expected);
+  }
 });
 
 test('mouth form, opening, position and size survive as separate controls',()=>{

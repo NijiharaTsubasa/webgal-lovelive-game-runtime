@@ -112,7 +112,7 @@ function state(f){return {
   nodes:[...f.nodes].map(([name,o])=>[name,o.position.toArray(),o.scale.toArray(),o.visible]),
 };}
 
-function eyelidFixture(withSkin=false){
+function eyelidFixture(){
   const shared=geometries(),g=shared.eye;
   for(const i of [3,4,5,9,10,11])g.attributes.uv.setXY(i,.3,.37);
   const extra=[],uv=[];
@@ -121,16 +121,12 @@ function eyelidFixture(withSkin=false){
     extra.push([sign*.85,y,.01],[sign, y+.015,.01],[sign*1.15,y,.01]);
     uv.push(...Array.from({length:3},()=>[.38,shadow?.44:.42]));
   }
-  if(withSkin)for(const sign of [1,-1]){
-    extra.push([sign*.7,2.18,.04],[sign*1.3,2.18,.04],[sign,2.5,.04]);
-    uv.push(...Array.from({length:3},()=>[.2,.1]));
-  }
   for(const [name,values,size]of [['position',extra.flat(),3],['uv',uv.flat(),2],
     ['normal',extra.flatMap(()=>[0,0,1]),3]]){
     g.setAttribute(name,new Float32BufferAttribute([...g.attributes[name].array,...values],size));
   }
   for(const target of g.morphAttributes.position){
-    const values=extra.flatMap((_,i)=>target.name===sourceName('eye','close')?[0,-.1,i>=12?.02:0]:
+    const values=extra.flatMap(()=>target.name===sourceName('eye','close')?[0,-.1,0]:
       target.name===sourceName('eye','smile')?[0,.1,0]:target.name===sourceName('eye','wide')?[0,.2,0]:[0,0,0]);
     const next=new Float32BufferAttribute([...target.array,...values],3);next.name=target.name;
     g.morphAttributes.position[g.morphAttributes.position.indexOf(target)]=next;
@@ -138,65 +134,21 @@ function eyelidFixture(withSkin=false){
   return fixture(shared);
 }
 
-test('eyelid line and painted shadow move together without entering the eyelash',()=>{
+test('eyelid parameters preserve paired native crease and shadow through eye expressions',()=>{
   const f=eyelidFixture(),driver=new LlasLive2dFace(f.character);
   for(const open of [0,.3,.73,1,1.5])for(const smile of [0,.6,1]){
-    const params={PARAM_EYE_L_OPEN:open,PARAM_EYE_L_SMILE:smile,PARAM_EYE_R_OPEN:open,PARAM_EYE_R_SMILE:smile};
+    const params={PARAM_EYE_L_OPEN:open,PARAM_EYE_R_OPEN:open,PARAM_EYE_L_SMILE:smile,PARAM_EYE_R_SMILE:smile};
     driver.setParameters(params);driver.update();
     const before=Array.from({length:24},(_,i)=>point(f.eye,i));
     for(const lid of [-1,-.83,.45,1]){
-      driver.setParameters({...params,PARAM_EYELID_L:lid});driver.update();
-      const dy=point(f.eye,12)[1]-before[12][1];
-      if(open<=1||lid<0)assert.ok(lid*dy>0,'available clearance must allow the complete overlay to move');
-      else near(dy,0); // This fixture's wide-open fold already reaches its eyebrow.
-      for(let i=12;i<18;i++)nearArray(point(f.eye,i).map((v,k)=>v-before[i][k]),[0,dy,0]);
-      for(const i of [...Array(12).keys(),18,19,20,21,22,23])nearArray(point(f.eye,i),before[i]);
-      const lash=Math.max(...[3,4,5].map(i=>point(f.eye,i)[1]));
-      const shadow=Math.min(...[15,16,17].map(i=>point(f.eye,i)[1]));
-      assert.ok(shadow>lash,'the shadow must stay above the upper eyelash');
+      driver.setParameters({...params,PARAM_EYELID_L:lid,PARAM_EYELID_R:-lid});driver.update();
+      for(let i=0;i<24;i++)nearArray(point(f.eye,i),before[i]);
     }
-    driver.setParameters(params);driver.update();
-    for(let i=0;i<24;i++)nearArray(point(f.eye,i),before[i]);
+    const nativeDelta=open>1?(open-1)*2*.2:(1-open)*(-.1*(1-smile)+.1*smile);
+    near(before[12][1]-f.shared.eye.attributes.position.getY(12),nativeDelta);
+    near(before[15][1]-f.shared.eye.attributes.position.getY(15),nativeDelta);
   }
   driver.dispose();assert.equal(f.eye.geometry,f.shared.eye);
-});
-
-test('eyelid clears the morphed skin in Eye_Around without moving that skin',()=>{
-  const f=eyelidFixture(true),driver=new LlasLive2dFace(f.character);
-  for(const open of [1,0,.6,1]){
-    const params={PARAM_EYE_L_OPEN:open};
-    driver.setParameters(params);driver.update();
-    const before=Array.from({length:30},(_,i)=>point(f.eye,i));
-    driver.setParameters({...params,PARAM_EYELID_L:1});driver.update();
-    for(let i=12;i<18;i++){
-      assert.ok(point(f.eye,i)[2]>point(f.eye,24)[2],'the entire crease and shadow must clear the local skin');
-    }
-    for(let i=24;i<30;i++)nearArray(point(f.eye,i),before[i]);
-    driver.setParameters(params);driver.update();
-    for(let i=0;i<30;i++)nearArray(point(f.eye,i),before[i]);
-  }
-  driver.dispose();
-});
-
-test('eyelid depth follows a sloping face in both passes and returns continuously to its native placement',()=>{
-  const f=eyelidFixture(),p=f.eye.geometry.attributes.position;
-  for(const i of [0,1,2,6,7,8])p.setZ(i,1.5);
-  const skin=f.nodes.get('Face').geometry.attributes.position;
-  for(let i=0;i<skin.count;i++)skin.setZ(i,5*(skin.getY(i)-2.175));
-  const pass=f.eye.clone();pass.userData.__parameterizedPassObject=true;f.root.add(pass);
-  const driver=new LlasLive2dFace(f.character);driver.update();
-  const before=Array.from({length:24},(_,i)=>point(f.eye,i));
-  driver.setParameters({PARAM_EYELID_L:1});driver.update();
-  assert.ok(f.eye.morphTargetInfluences[driver.eyeWork.channels.get('eye:L:lidDepth')]>0);
-  assert.deepEqual(pass.morphTargetInfluences,f.eye.morphTargetInfluences);
-  const delta=point(f.eye,12).map((v,k)=>v-before[12][k]);
-  for(let i=12;i<18;i++)nearArray(point(f.eye,i).map((v,k)=>v-before[i][k]),delta);
-  driver.setParameters({PARAM_EYELID_L:1e-7});driver.update();
-  for(let i=0;i<24;i++)nearArray(point(f.eye,i),before[i]);
-  driver.setParameters({});driver.update();
-  for(let i=0;i<24;i++)nearArray(point(f.eye,i),before[i]);
-  assert.deepEqual(pass.morphTargetInfluences,f.eye.morphTargetInfluences);
-  driver.dispose();assert.equal(f.eye.geometry,f.shared.eye);assert.equal(pass.geometry,f.shared.eye);
 });
 
 test('published adapter needs only the standard context and returns null for board faces',()=>{

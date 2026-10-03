@@ -17,7 +17,6 @@ export function llasFaceControls(parameters, defaults = {}) {
     eyes[side] = {
       open: clamp(value(`PARAM_EYE_${side}_OPEN`, 1), 0, 1.5),
       smile: clamp(value(`PARAM_EYE_${side}_SMILE`), 0, 1),
-      lid: 0.07 * clamp(value(`PARAM_EYELID_${side}`), -1, 1),
     };
     brows[side] = {
       x: sign * 0.21 * clamp(value(`PARAM_BROW_${side}_X`), -1, 1),
