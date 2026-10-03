@@ -1,5 +1,4 @@
-// These neutral weights are the source characters' actual normal clips.
-// Target strengths remain character-specific geometry, shared across costumes.
+// Neutral recipes define compatibility groups; target deltas come from each mesh.
 const plain = (options = {}) => ({
   browNeutral: { Eyebrow_Normal: 1 },
   eyeNeutral: { Eyelids_Normal: 1 },
@@ -11,9 +10,8 @@ const modern = () => plain({
 });
 
 export const HASUNOSORA_FACE_PROFILES = Object.freeze({
-  'hasunosora.kozue': plain(),
-  'hasunosora.tsuzuri': plain(),
-  'hasunosora.megumi': plain(),
+  'hasunosora.old': plain(),
+  'hasunosora.new': modern(),
   'hasunosora.kaho': plain({
     browNeutral: {
       Eyebrow_Angry: 0.05,
@@ -23,11 +21,4 @@ export const HASUNOSORA_FACE_PROFILES = Object.freeze({
       Eyebrow_Down_R: 0.38,
     },
   }),
-  'hasunosora.sayaka': plain(),
-  'hasunosora.rurino': plain(),
-  'hasunosora.ginko': modern(),
-  'hasunosora.kosuzu': modern(),
-  'hasunosora.hime': modern(),
-  'hasunosora.izumi': modern(),
-  'hasunosora.ceras': modern(),
 });

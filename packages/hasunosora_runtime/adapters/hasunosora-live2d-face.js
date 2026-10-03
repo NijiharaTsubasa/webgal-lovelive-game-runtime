@@ -53,14 +53,15 @@ function sourceMeshes(node) {
 class FaceWorkspace {
   constructor(root, mesh, THREE) {
     this.source = mesh.geometry;
-    if (!this.source?.morphTargetsRelative)
+    const hasMorphs = Object.values(this.source.morphAttributes).some((attributes) => attributes.length);
+    if (hasMorphs && !this.source.morphTargetsRelative)
       throw new Error('Hasunosora face requires relative Morph geometry');
     this.geometry = this.source.clone();
     this.basePosition = this.geometry.attributes.position;
     this.position = this.basePosition.clone();
     this.baseNormal = this.geometry.attributes.normal;
     this.normal = this.baseNormal?.clone();
-    // In all eleven source rigs face right/up/forward correspond to Head
+    // In the source rigs face right/up/forward correspond to Head
     // local +Z/-X/-Y. Recover that frame from bind data, not the current pose.
     // This removes costume-specific rigid translation/rotation before shaping.
     const head = mesh.skeleton?.bones.findIndex((bone) => bone.name === 'Head') ?? -1;
@@ -250,6 +251,9 @@ export class HasunosoraLive2dFace {
           work.sideWeights.R[i] = 1 - left;
         }
       }
+      // The face opening and its companion strip must use the same smile controls.
+      this.hasPartialSmile = [...this.parts.Face, ...this.parts.EyeShadow]
+        .every((work) => work.target('Eyelids_Smile'));
       for (const work of [...this.parts.Face, ...this.parts.EyeShadow]) {
         work.eyeNeutral = work.vector(this.profile.eyeNeutral);
       }
@@ -342,7 +346,8 @@ export class HasunosoraLive2dFace {
         work.add(work.target(`Eyelids_Close_${side}`), closure * (1 - eye.smile));
         work.add(work.target(`Eyelids_SmileB_${side}`), closure * eye.smile);
         work.add(work.target('Eyelids_Open'), wide, side);
-        work.add(work.target('Eyelids_Smile'), eye.smile * closure * (1 - closure) * 1.6, side);
+        if (this.hasPartialSmile)
+          work.add(work.target('Eyelids_Smile'), eye.smile * closure * (1 - closure) * 1.6, side);
         // Source EYELID moves the independent thin upper-lid line, not the
         // aperture. EyeShadow is this rig's separate companion strip.
         if (this.parts.EyeShadow.includes(work) && eye.lid) {
@@ -377,8 +382,8 @@ export class HasunosoraLive2dFace {
   }
 
   applyMouth(mouth) {
-    const round = Math.max(0, -mouth.form) * mouth.open;
     for (const work of this.parts.Face) {
+      const round = work.target('Mouth_O') ? Math.max(0, -mouth.form) * mouth.open : 0;
       work.add(work.mouthNeutral, 1 - mouth.open);
       work.add(work.target('Mouth_A'), mouth.open * (1 - round));
       work.add(work.target('Mouth_O'), mouth.open * round);

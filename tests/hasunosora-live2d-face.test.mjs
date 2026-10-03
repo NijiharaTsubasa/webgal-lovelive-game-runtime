@@ -1,13 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import { readFile } from 'node:fs/promises';
+import { HASUNOSORA_FACE_PROFILES } from '../packages/hasunosora_runtime/adapters/hasunosora-face-profiles.js';
 import { createExpressionAdapter } from '../packages/hasunosora_runtime/adapters/hasunosora-live2d-face.js';
 
 // Hand-authored tiny facial islands: tests need no source bundles or converted GLB.
 // Left/right pieces have distinct vertices; eye closure cannot accidentally pass
 // by moving the whole face or the other eye.
-const characters = ['kaho', 'sayaka', 'rurino', 'kozue', 'tsuzuri', 'megumi',
-  'ginko', 'kosuzu', 'hime', 'izumi', 'ceras'];
+const groups = ['kaho', 'old', 'new'];
 const near = (actual, expected, label = '') => assert.ok(
   Math.abs(actual - expected) < 1e-6, `${label}: ${actual} != ${expected}`);
 const nearPoint = (actual, expected) => actual.forEach((value, index) => near(value, expected[index]));
@@ -104,7 +105,7 @@ function fixture(character = 'kaho', shared = undefined) {
 
 function point(mesh, index) {
   const value = new THREE.Vector3().fromBufferAttribute(mesh.geometry.attributes.position, index);
-  mesh.morphTargetInfluences.forEach((weight, target) => {
+  mesh.morphTargetInfluences?.forEach((weight, target) => {
     if (weight) value.addScaledVector(new THREE.Vector3().fromBufferAttribute(
       mesh.geometry.morphAttributes.position[target], index), weight);
   });
@@ -114,7 +115,7 @@ function point(mesh, index) {
 function snapshot(f) {
   return Object.fromEntries(Object.entries(f.meshes).map(([kind, mesh]) => [kind, {
     geometry: mesh.geometry, dictionary: mesh.morphTargetDictionary,
-    influences: [...mesh.morphTargetInfluences],
+    influences: [...(mesh.morphTargetInfluences ?? [])],
     position: mesh.position.toArray(), scale: mesh.scale.toArray(), quaternion: mesh.quaternion.toArray(),
   }]));
 }
@@ -123,15 +124,15 @@ function assertRestored(f, original) {
   for (const [kind, mesh] of Object.entries(f.meshes)) {
     assert.equal(mesh.geometry, original[kind].geometry);
     assert.equal(mesh.morphTargetDictionary, original[kind].dictionary);
-    assert.deepEqual([...mesh.morphTargetInfluences], original[kind].influences);
+    assert.deepEqual([...(mesh.morphTargetInfluences ?? [])], original[kind].influences);
     assert.deepEqual(mesh.position.toArray(), original[kind].position);
     assert.deepEqual(mesh.scale.toArray(), original[kind].scale);
     assert.deepEqual(mesh.quaternion.toArray(), original[kind].quaternion);
   }
 }
 
-test('all eleven character domains create independent adapters through the standard context', () => {
-  for (const name of characters) {
+test('all three neutral domains create independent adapters through the standard context', () => {
+  for (const name of groups) {
     const f = fixture(name), before = snapshot(f);
     const adapter = createExpressionAdapter(f.context);
     assert.ok(adapter, name);
@@ -159,7 +160,7 @@ test('left eye and brow inputs leave the right side and mouth unchanged', () => 
 });
 
 test('neutral input uses character basal shape without reading named emotional recipes', () => {
-  const a = fixture('kozue'), b = fixture('kozue');
+  const a = fixture('old'), b = fixture('old');
   b.component.morphPoses = [{ name: 'normal', targets: { 'Face Renderer': { 'Face_.Mouth_A': 123 } } }];
   b.component.expressions = [{ name: 'normal', selections: { face: 'impossible' } }];
   const da = createExpressionAdapter(a.context), db = createExpressionAdapter(b.context);
@@ -179,7 +180,7 @@ test('neutral input uses character basal shape without reading named emotional r
 });
 
 test('derived geometry and owned weights cover every material pass while restoring each underlay', () => {
-  const f = fixture('kozue');
+  const f = fixture('old');
   const passes = Object.values(f.meshes).map(mesh => {
     const pass = mesh.clone();
     pass.name = `${mesh.name}_Outline`;
@@ -239,11 +240,11 @@ test('instances sharing original geometry cannot change each other or the source
     [kind, { positions: geometry.attributes.position.array.slice(), targets: geometry.morphAttributes.position.map(x => x.array.slice()) }]));
   const da = createExpressionAdapter(a.context), db = createExpressionAdapter(b.context);
   db.apply({ PARAM_MOUTH_OPEN_Y: .25, PARAM_EYE_R_OPEN: .2 }, { time: 1, delta: 0 });
-  const bWeights = Object.fromEntries(Object.entries(b.meshes).map(([kind, mesh]) => [kind, [...mesh.morphTargetInfluences]]));
+  const bWeights = Object.fromEntries(Object.entries(b.meshes).map(([kind, mesh]) => [kind, [...(mesh.morphTargetInfluences ?? [])]]));
   const bPoints = Array.from({ length: 12 }, (_, i) => point(b.meshes.Face, i));
   da.apply({ PARAM_MOUTH_OPEN_Y: 1, PARAM_BROW_L_FORM: -1, PARAM_EYE_L_OPEN: 0 }, { time: 2, delta: .1 });
   da.dispose();
-  for (const [kind, mesh] of Object.entries(b.meshes)) assert.deepEqual([...mesh.morphTargetInfluences], bWeights[kind]);
+  for (const [kind, mesh] of Object.entries(b.meshes)) assert.deepEqual([...(mesh.morphTargetInfluences ?? [])], bWeights[kind]);
   bPoints.forEach((expected, i) => nearPoint(point(b.meshes.Face, i), expected));
   for (const [kind, geometry] of Object.entries(a.geometries)) {
     assert.deepEqual(geometry.attributes.position.array, originals[kind].positions);
@@ -278,7 +279,7 @@ test('failed creation restores resources already bound before the missing node',
 });
 
 test('original node groups can contain multiple primitives with optional normals and indices absent', () => {
-  const f = fixture('kozue');
+  const f = fixture('old');
   const source = f.meshes.Face;
   const original = source.geometry;
   original.deleteAttribute('normal'); original.setIndex(null);
@@ -298,7 +299,7 @@ test('original node groups can contain multiple primitives with optional normals
 });
 
 test('equivalent costume bind frames preserve posed positions and authored normal deltas', () => {
-  const a = fixture('kozue'), b = fixture('kozue');
+  const a = fixture('old'), b = fixture('old');
   const transform = new THREE.Matrix4().compose(new THREE.Vector3(.4, -.9, .2),
     new THREE.Quaternion().setFromEuler(new THREE.Euler(.12, -.17, .22)), new THREE.Vector3(1, 1, 1));
   const linear = new THREE.Matrix3().setFromMatrix4(transform);
@@ -344,7 +345,7 @@ test('equivalent costume bind frames preserve posed positions and authored norma
 });
 
 test('iris size and highlight size remain independent while gaze moves both together', () => {
-  const f = fixture('kozue'), eye = f.meshes.Eye, geometry = eye.geometry;
+  const f = fixture('old'), eye = f.meshes.Eye, geometry = eye.geometry;
   for (const [name, attribute] of Object.entries(geometry.attributes)) {
     const values = [...attribute.array, ...attribute.array];
     geometry.setAttribute(name, new THREE.Float32BufferAttribute(values, attribute.itemSize));
@@ -386,7 +387,7 @@ test('iris size and highlight size remain independent while gaze moves both toge
 });
 
 test('tear uses its source channel, updates cached geometry and restores native ownership', () => {
-  const f = fixture('kozue'), face = f.meshes.Face;
+  const f = fixture('old'), face = f.meshes.Face;
   const count = face.geometry.attributes.position.count;
   const attribute = new THREE.Float32BufferAttribute(Array.from({ length: count }, (_, i) =>
     i < 6 ? [0, -.002, .001] : [0, 0, 0]).flat(), 3);
@@ -400,14 +401,14 @@ test('tear uses its source channel, updates cached geometry and restores native 
   near(face.morphTargetInfluences[index], 0);
   adapter.restore(); near(face.morphTargetInfluences[index], .23);
   adapter.dispose(); near(face.morphTargetInfluences[index], .23);
-  const unsupported = fixture('ginko'), other = createExpressionAdapter(unsupported.context);
+  const unsupported = fixture('new'), other = createExpressionAdapter(unsupported.context);
   other.apply({}, { time: 0, delta: 0 }); const before = point(unsupported.meshes.Face, 0);
   other.restore(); other.apply({ PARAM_TEAR: 1 }, { time: 0, delta: 0 });
   nearPoint(point(unsupported.meshes.Face, 0), before); other.dispose();
 });
 
 test('dispose keeps rendered private attributes reachable for renderer buffer cleanup', () => {
-  const f = fixture('kozue'), original = f.meshes.Face.geometry;
+  const f = fixture('old'), original = f.meshes.Face.geometry;
   let sourceDisposed = false;
   original.addEventListener('dispose', () => { sourceDisposed = true; });
   const adapter = createExpressionAdapter(f.context);
@@ -430,7 +431,7 @@ test('dispose keeps rendered private attributes reachable for renderer buffer cl
 });
 
 test('active derived geometry bypasses stale culling bounds and restores each object flag', () => {
-  const f = fixture('kozue');
+  const f = fixture('old');
   f.meshes.Face.frustumCulled = true;
   f.meshes.Brow.frustumCulled = false;
   const pass = f.meshes.Face.clone(); pass.userData.__parameterizedPassObject = true;
@@ -451,7 +452,7 @@ test('active derived geometry bypasses stale culling bounds and restores each ob
 });
 
 test('rejecting a nonfinite control cannot leave the previous frame applied', () => {
-  const f = fixture('kozue');
+  const f = fixture('old');
   const face = f.meshes.Face, index = face.morphTargetDictionary['Face_.Mouth_A'];
   face.morphTargetInfluences[index] = .37;
   const adapter = createExpressionAdapter(f.context);
@@ -482,7 +483,7 @@ function foreheadFixture({ slope = false, behind = false, nonIndexed = false } =
   geometries.Face = nonIndexed ? face.toNonIndexed() : face;
   // An authored depth slope must survive clearance as a rigid side translation.
   for (let i = 0; i < 6; i++) geometries.Brow.attributes.position.setZ(i, .1 + (i % 3) * .001);
-  const f = fixture('ginko', geometries);
+  const f = fixture('new', geometries);
   f.meshes.Face.material.side = THREE.DoubleSide;
   return f;
 }
@@ -652,4 +653,77 @@ test('authored hidden alternate brow islands do not force visible brows outside 
   }
   adapter.dispose(); free.dispose();
   assert.deepEqual(f.geometries.Brow.attributes.position.array, source);
+});
+
+
+test('runtime registers each neutral profile exactly once', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../packages/hasunosora_runtime/config.json', import.meta.url), 'utf8'));
+  const registered = manifest.components.filter(component => component.type === 'garupa-expression-adapter');
+  assert.deepEqual(registered.map(component => component.motionGroup).sort(),
+    ['hasunosora.kaho', 'hasunosora.new', 'hasunosora.old']);
+  assert.deepEqual(Object.keys(HASUNOSORA_FACE_PROFILES).sort(), registered.map(component => component.motionGroup).sort());
+});
+
+function removeTargets(geometry, names) {
+  for (const semantic of Object.keys(geometry.morphAttributes))
+    geometry.morphAttributes[semantic] = geometry.morphAttributes[semantic].filter(attribute => !names.includes(attribute.name));
+}
+
+test('an eye without Morphs supports gaze and restores its exact source geometry', () => {
+  const geometries = Object.fromEntries(['Face', 'Brow', 'Eye', 'EyeShadow'].map(kind => [kind, makeGeometry(kind)]));
+  geometries.Eye.morphAttributes = {};
+  geometries.Eye.morphTargetsRelative = false;
+  const f = fixture('new', geometries), before = snapshot(f);
+  const adapter = createExpressionAdapter(f.context);
+  adapter.apply({});
+  const neutral = point(f.meshes.Eye, 0);
+  adapter.apply({ PARAM_EYE_BALL_X: .5, PARAM_EYE_BALL_Y: -.5 });
+  const gazing = point(f.meshes.Eye, 0);
+  assert.ok(gazing[0] > neutral[0]);
+  assert.ok(gazing[1] < neutral[1]);
+  adapter.dispose();
+  assertRestored(f, before);
+  assert.equal(geometries.Eye.morphTargetsRelative, false);
+});
+
+test('absolute Morphs still reject creation and restore previously bound meshes', () => {
+  const f = fixture('new'), before = snapshot(f);
+  f.geometries.Eye.morphTargetsRelative = false;
+  assert.throws(() => createExpressionAdapter(f.context), /relative Morph/);
+  assertRestored(f, before);
+});
+
+test('missing round-mouth target preserves aperture at partial and maximum round input', () => {
+  const geometries = Object.fromEntries(['Face', 'Brow', 'Eye', 'EyeShadow'].map(kind => [kind, makeGeometry(kind)]));
+  removeTargets(geometries.Face, ['Face_.Mouth_O']);
+  const f = fixture('new', geometries), adapter = createExpressionAdapter(f.context);
+  for (const open of [.2, .6, 1]) for (const form of [-.3, -1]) {
+    adapter.apply({ PARAM_MOUTH_OPEN_Y: open, PARAM_MOUTH_FORM_01: form });
+    // Upper and lower centre vertices share the corner shift, so aperture isolates opening.
+    const baseUpper = geometries.Face.attributes.position.getY(7);
+    const baseLower = geometries.Face.attributes.position.getY(11);
+    near(point(f.meshes.Face, 7)[1] - point(f.meshes.Face, 11)[1], baseUpper - baseLower + .008 * open);
+  }
+  adapter.dispose();
+});
+
+test('face and eye strip share partial-smile capability while retaining bilateral smile closure', () => {
+  const geometries = Object.fromEntries(['Face', 'Brow', 'Eye', 'EyeShadow'].map(kind => [kind, makeGeometry(kind)]));
+  removeTargets(geometries.EyeShadow, ['EyeShadow_.Eyelids_Smile']);
+  const f = fixture('new', geometries), adapter = createExpressionAdapter(f.context);
+  for (const open of [0, .2, .6, 1]) {
+    adapter.apply({ PARAM_EYE_L_OPEN: open, PARAM_EYE_L_SMILE: 1 });
+    for (let i = 0; i < 6; i++) nearPoint(point(f.meshes.Face, i), point(f.meshes.EyeShadow, i));
+    near(point(f.meshes.Face, 1)[1], geometries.Face.attributes.position.getY(1) - .003 * (1 - open));
+    nearPoint(point(f.meshes.Face, 4), new THREE.Vector3().fromBufferAttribute(geometries.Face.attributes.position, 4).toArray());
+  }
+  adapter.dispose();
+});
+
+test('fully supported meshes retain the authored partial-smile contribution', () => {
+  const f = fixture('new'), adapter = createExpressionAdapter(f.context);
+  adapter.apply({ PARAM_EYE_L_OPEN: .5, PARAM_EYE_L_SMILE: .8 });
+  const base = f.geometries.Face.attributes.position.getY(1);
+  near(point(f.meshes.Face, 1)[1], base - .004 * .5 * .2 - .003 * .5 * .8 + .001 * .8 * .5 * .5 * 1.6);
+  adapter.dispose();
 });
