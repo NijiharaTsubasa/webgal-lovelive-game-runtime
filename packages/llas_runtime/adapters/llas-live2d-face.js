@@ -388,7 +388,6 @@ export class LlasLive2dFace {
       });
       binding.object[binding.property].fromArray(value);
     }
-    this.root.updateMatrixWorld(true);
     for (const [side, bone] of Object.entries(this.eyeBones)) {
       // Reuse the face-local basis measured at binding.
       this.eyeSpace.copy(this.gazeBasis[side]);

@@ -240,9 +240,10 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
     })
   );
   return (side) => {
-    const { ids, triangles, margin } = samples[side],
+    const sample = samples[side], { ids, triangles, margin } = sample,
       targets = eyeMesh.geometry.morphAttributes.position,
       posed = new Map();
+    let unchanged = sample.posed !== undefined;
     for (const i of ids) {
       let x = base.getX(i),
         y = base.getY(i),
@@ -254,8 +255,13 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
         y += targets[j].getY(i) * weight;
         z += targets[j].getZ(i) * weight;
       }
+      const previous = sample.posed?.get(i);
+      if (!previous || !Object.is(x, previous.x) || !Object.is(y, previous.y) || !Object.is(z, previous.z)) unchanged = false;
       posed.set(i, { x, y, z });
     }
+    // Compare the actual query vertices, including native Morphs and direct
+    // attribute edits; parameter values alone do not describe this shape.
+    if (unchanged) return sample.shift;
     let shift = 0;
     for (const ids of triangles) {
       const brow = ids.map((i) => posed.get(i));
@@ -270,6 +276,8 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
       for (const triangle of candidates)
         shift = Math.max(shift, triangleDepthGap(brow, triangle) + margin);
     }
+    sample.posed = posed;
+    sample.shift = shift;
     return shift;
   };
 }
