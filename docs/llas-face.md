@@ -84,7 +84,7 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 
 当前适配器要求普通脸 `LLAS.Face` 声明，璃奈板模型返回 `null`，不使用普通脸适配路径。模型需要：
 
-- `Eye_Around`、`Mouth`、`Face`、`LeftEyeWhiteLine`、`RightEyeWhiteLine`：对应原脸部 Mesh，各自能解析为单个源 primitive。`Face` 提供眉毛深度约束所需的面部表面。
+- `Eye_Around`、`Mouth`、`Face`、`LeftEyeWhiteLine`、`RightEyeWhiteLine`：对应原脸部 Mesh，各自能解析为单个源 primitive。`Face` 提供眉毛与眼皮褶线深度约束所需的面部表面。
 - `LeftEye_Root`、`RightEye_Root`、`LeftEye2`、`RightEye2`：用于眼球位移、缩放及局部基准测量。
 - `LLAS.Face.parameters.bindings` 中的原生辅助属性绑定，供眼睛开合、笑眼和超开状态求值。
 - 相对 Morph、位置及 UV 数据。适配器按实际名称字典绑定下表中的底层通道；Morph 法线可选，缺少时沿用基础法线。必要通道缺失时加载报错，已声明的零位移通道有效。
@@ -100,6 +100,8 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 | `RightEyeWhiteLine` | `RightEyeWhiteLineBlendShape.RightEye_LineWhite_001`、`RightEyeWhiteLineBlendShape.RightEye_LineWhite_002` | 闭眼、笑眼睫毛高光 |
 
 30 个普通脸的中性眼和闭嘴基准使用基础位置，即零位置 Morph 增量。运行时根据图集与连通结构划分区域：眼睛使用底层通道在眼区的增量；眉毛使用独立平移、旋转、曲率通道，负曲率结合本模型的中性上拱幅度计算。每侧眉在完成形变后依据 `Face` 表面整体调整深度。
+
+`PARAM_EYELID_L/R` 控制眼皮褶线与下方阴影组成的完整浮片。两者共同上下移动，并依据 `Face` 表面及 `Eye_Around` 当前 Morph 下的眼周皮肤补偿移动产生的深度变化。移动范围随当前眼型和眉形确定：向下保留至少一半与睫毛的间距，向上保留至少一半与眉毛的间距；投影已重叠的方向保持当前位置。参数为零时保留原眼型中的位置。
 
 嘴部使用 A、O 两个底层形态，分别建立实例内形变支撑。A 分支包含宽高、位置、缩放和曲率；O 分支包含 XY 尺寸和纵向位置，口部 XY 缩放为 `0.5*min(1,scale)`。设开度为 `a`、嘴形为 `form`，圆口混合量 `r=a*max(0,-form)`；两分支在开度 `a` 下求出的完整增量分别乘 `1-r`、`r`。闭嘴曲率以本模型唇线为基准连续调整，开口时负嘴形逐渐转为小圆口。
 

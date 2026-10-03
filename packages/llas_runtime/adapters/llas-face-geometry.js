@@ -148,7 +148,7 @@ export function classifyEyeRegions(geometry) {
     // Use whole islands: unrelated skin UVs can cross the same V band.
     if (
       vertices.every(
-        (i) => uv.getX(i) > 0.34 && uv.getX(i) < 0.45 && uv.getY(i) > 0.414 && uv.getY(i) < 0.43
+        (i) => uv.getX(i) > 0.34 && uv.getX(i) < 0.45 && uv.getY(i) > 0.414 && uv.getY(i) < 0.46
       )
     ) {
       for (const i of vertices) regions[position.getX(i) > 0 ? 'L' : 'R'].lid[i] = 1;
@@ -176,10 +176,9 @@ export function regionBounds(geometry, mask, offset) {
   };
 }
 
-// The adapter moves brows across a curved forehead in XY. Query that surface
-// in eye-mesh coordinates so a complete brow can clear the skin without
-// changing its authored bend, thickness, or relative depth.
-export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
+// Query the skin in eye-mesh coordinates so a complete facial overlay can
+// clear it without changing its authored bend, thickness, or relative depth.
+export function faceRegionDepthConstraint(eyeMesh, faceMesh, regions, open, THREE, region = 'brow') {
   const transform = new THREE.Matrix4()
     .copy(eyeMesh.matrixWorld)
     .invert()
@@ -195,10 +194,7 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
   if (!(cell > 0)) throw new Error('LLAS face surface is degenerate');
   const grid = new Map(),
     key = (x, y) => `${Math.floor((x - minX) / cell)},${Math.floor((y - minY) / cell)}`;
-  const count = index?.count ?? p.count,
-    get = (i) => (index ? index.getX(i) : i);
-  for (let i = 0; i < count; i += 3) {
-    const triangle = [vertices[get(i)], vertices[get(i + 1)], vertices[get(i + 2)]];
+  const insert = (grid, triangle) => {
     const loX = Math.floor((Math.min(...triangle.map((v) => v.x)) - minX) / cell),
       hiX = Math.floor((Math.max(...triangle.map((v) => v.x)) - minX) / cell);
     const loY = Math.floor((Math.min(...triangle.map((v) => v.y)) - minY) / cell),
@@ -209,7 +205,11 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
         if (!grid.has(k)) grid.set(k, []);
         grid.get(k).push(triangle);
       }
-  }
+  };
+  const count = index?.count ?? p.count,
+    get = (i) => (index ? index.getX(i) : i);
+  for (let i = 0; i < count; i += 3)
+    insert(grid, [vertices[get(i)], vertices[get(i + 1)], vertices[get(i + 2)]]);
   const depth = (x, y) => {
     let z = -Infinity;
     for (const [a, b, c] of grid.get(key(x, y)) ?? []) {
@@ -224,17 +224,21 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
   };
   const base = eyeMesh.geometry.attributes.position;
   const samples = Object.fromEntries(
-    Object.entries(regions).map(([side, { brow }]) => {
+    Object.entries(regions).map(([side, masks]) => {
+      const brow = masks[region];
       const ids = Array.from(brow, (_, i) => i).filter((i) => brow[i]);
-      const gaps = ids
+      if (!ids.length) return [side, { ids, triangles: [], margin: 0 }];
+      const supportedGaps = ids
         .map(
           (i) =>
             base.getZ(i) +
             open[i * 3 + 2] -
             depth(base.getX(i) + open[i * 3], base.getY(i) + open[i * 3 + 1])
         )
-        .filter((gap) => Number.isFinite(gap) && gap > 0);
-      if (!gaps.length) throw new Error(`LLAS ${side} brow has no face surface support`);
+        .filter(Number.isFinite);
+      const gaps = supportedGaps.filter(gap => gap > 0);
+      if (region === 'brow' && !gaps.length)
+        throw new Error(`LLAS ${side} ${region} has no face surface support`);
       // A scale-relative clearance avoids coplanar depth fighting at contact.
       const indices = eyeMesh.geometry.index,
         total = indices?.count ?? base.count,
@@ -244,26 +248,58 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
         const triangle = [at(i), at(i + 1), at(i + 2)];
         if (triangle.every((j) => brow[j])) triangles.push(triangle);
       }
-      return [side, { ids, triangles, margin: Math.min(...gaps) * 0.01 }];
+      // Eyelid overlays can begin over the face's eye opening, with no skin
+      // triangle below them. Their moved triangles still query the whole grid.
+      return [side, { ids, triangles, margin: gaps.length ? Math.min(...gaps) * 0.01 : cell * 1e-4 }];
     })
   );
-  return (side) => {
-    const { ids, triangles, margin } = samples[side],
-      targets = eyeMesh.geometry.morphAttributes.position,
-      posed = new Map();
-    for (const i of ids) {
-      let x = base.getX(i),
-        y = base.getY(i),
-        z = base.getZ(i);
-      for (let j = 0; j < targets.length; j++) {
-        const weight = eyeMesh.morphTargetInfluences[j];
-        if (!weight) continue;
-        x += targets[j].getX(i) * weight;
-        y += targets[j].getY(i) * weight;
-        z += targets[j].getZ(i) * weight;
-      }
-      posed.set(i, { x, y, z });
+  const pose = (i) => {
+    const vertex = { x: base.getX(i), y: base.getY(i), z: base.getZ(i) };
+    const targets = eyeMesh.geometry.morphAttributes.position;
+    for (let j = 0; j < targets.length; j++) {
+      const weight = eyeMesh.morphTargetInfluences[j];
+      if (!weight) continue;
+      vertex.x += targets[j].getX(i) * weight;
+      vertex.y += targets[j].getY(i) * weight;
+      vertex.z += targets[j].getZ(i) * weight;
     }
+    return vertex;
+  };
+  // Eye_Around also carries the skin bordering the eye opening. Its complete
+  // skin triangles occupy V < .3 in all 30 LLAS face atlases, separately from
+  // lashes, brows and crease/shadow sheets. They follow the current eye Morph.
+  const skinTriangles = [];
+  if (region === 'lid') {
+    const uv = eyeMesh.geometry.attributes.uv,
+      indices = eyeMesh.geometry.index,
+      total = indices?.count ?? base.count,
+      at = (i) => (indices ? indices.getX(i) : i);
+    for (let i = 0; i < total; i += 3) {
+      const triangle = [at(i), at(i + 1), at(i + 2)];
+      if (triangle.every((j) => uv.getY(j) < 0.3 &&
+        Object.values(regions).every((masks) => !masks.lid[j] && !masks.brow[j])))
+        skinTriangles.push(triangle);
+    }
+  }
+  const skinIds = [...new Set(skinTriangles.flat())],
+    skinTargets = eyeMesh.geometry.morphAttributes.position
+      .map((target, index) => ({ target, index }))
+      .filter(({ target }) => skinIds.some((i) => target.getX(i) || target.getY(i) || target.getZ(i)))
+      .map(({ index }) => index);
+  let skinWeights = null;
+  const skinGrid = new Map();
+  const updateSkin = () => {
+    const weights = skinTargets.map((i) => eyeMesh.morphTargetInfluences[i]);
+    if (skinWeights && weights.every((w, i) => w === skinWeights[i])) return;
+    skinWeights = weights;
+    skinGrid.clear();
+    const posed = new Map(skinIds.map((i) => [i, pose(i)]));
+    for (const triangle of skinTriangles) insert(skinGrid, triangle.map((i) => posed.get(i)));
+  };
+  return (side) => {
+    updateSkin();
+    const { ids, triangles, margin } = samples[side],
+      posed = new Map(ids.map((i) => [i, pose(i)]));
     let shift = 0;
     for (const ids of triangles) {
       const brow = ids.map((i) => posed.get(i));
@@ -273,8 +309,10 @@ export function browDepthConstraint(eyeMesh, faceMesh, regions, open, THREE) {
         hiY = Math.floor((Math.max(...brow.map((v) => v.y)) - minY) / cell);
       const candidates = new Set();
       for (let x = loX; x <= hiX; x++)
-        for (let y = loY; y <= hiY; y++)
+        for (let y = loY; y <= hiY; y++) {
           for (const triangle of grid.get(`${x},${y}`) ?? []) candidates.add(triangle);
+          for (const triangle of skinGrid.get(`${x},${y}`) ?? []) candidates.add(triangle);
+        }
       for (const triangle of candidates)
         shift = Math.max(shift, triangleDepthGap(brow, triangle) + margin);
     }
