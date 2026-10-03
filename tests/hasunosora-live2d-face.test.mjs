@@ -159,6 +159,31 @@ test('left eye and brow inputs leave the right side and mouth unchanged', () => 
   adapter.dispose();
 });
 
+test('independent eyelid-line parameters keep the face aperture and its shadow paired', () => {
+  for (const group of groups) {
+    const f = fixture(group), original = snapshot(f);
+    const adapter = createExpressionAdapter(f.context);
+    for (const open of [0, .3, .73, 1, 1.5]) for (const smile of [0, .6, 1]) {
+      const parameters = { PARAM_EYE_L_OPEN: open, PARAM_EYE_R_OPEN: .6,
+        PARAM_EYE_L_SMILE: smile, PARAM_EYE_R_SMILE: .4 };
+      adapter.apply(parameters);
+      const baseline = Object.fromEntries(['Face', 'EyeShadow'].map(kind => [kind,
+        Array.from(f.meshes[kind].geometry.attributes.position.array)]));
+      for (const [left, right] of [[-.83, -.83], [-1, 0], [0, 1], [.45, -.3]]) {
+        adapter.restore();
+        adapter.apply({ ...parameters, PARAM_EYELID_L: left, PARAM_EYELID_R: right });
+        for (const kind of ['Face', 'EyeShadow']) {
+          assert.deepEqual(Array.from(f.meshes[kind].geometry.attributes.position.array), baseline[kind],
+            `${group} ${kind}: independent line control must not detach the shadow from the aperture`);
+        }
+        for (let i = 0; i < 6; i++) nearPoint(point(f.meshes.Face, i), point(f.meshes.EyeShadow, i));
+      }
+    }
+    adapter.dispose();
+    assertRestored(f, original);
+  }
+});
+
 test('neutral input uses character basal shape without reading named emotional recipes', () => {
   const a = fixture('old'), b = fixture('old');
   b.component.morphPoses = [{ name: 'normal', targets: { 'Face Renderer': { 'Face_.Mouth_A': 123 } } }];

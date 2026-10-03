@@ -14,7 +14,6 @@ export function hasunosoraFaceControls(parameters, defaults = {}) {
     eyes: Object.fromEntries(SIDES.map((side) => [side, {
       open: value(`PARAM_EYE_${side}_OPEN`, 1, 0, 1.5),
       smile: value(`PARAM_EYE_${side}_SMILE`, 0, 0, 1),
-      lid: value(`PARAM_EYELID_${side}`),
     }])),
     brows: Object.fromEntries(SIDES.map((side) => [side, {
       x: value(`PARAM_BROW_${side}_X`),
@@ -348,14 +347,6 @@ export class HasunosoraLive2dFace {
         work.add(work.target('Eyelids_Open'), wide, side);
         if (this.hasPartialSmile)
           work.add(work.target('Eyelids_Smile'), eye.smile * closure * (1 - closure) * 1.6, side);
-        // Source EYELID moves the independent thin upper-lid line, not the
-        // aperture. EyeShadow is this rig's separate companion strip.
-        if (this.parts.EyeShadow.includes(work) && eye.lid) {
-          for (let i = 0; i < work.position.count; i++) {
-            work.position.setY(i, work.position.getY(i) +
-              eye.lid * this.eyeDistance * 0.065 * work.sideWeights[side][i]);
-          }
-        }
       }
     }
   }

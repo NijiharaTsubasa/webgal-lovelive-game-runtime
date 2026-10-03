@@ -14,6 +14,10 @@
 
 适配器通过标准 `resolveNode` 绑定 `Face Renderer`、`Brow Renderer`、`EyeShadow Renderer`、`Eye Renderer`，读取它们的位置属性、可用法线和相对 Morph。Eye 可仅含基础网格，其视线与大小控制直接作用于位置属性。Eye 的虹膜与高光 primitive 分别处理；高光材质使用 `character-highlight`。脸部坐标由 Head 的绑定矩阵确定，服装的局部位置与旋转由这层坐标转换吸收。
 
+EyeShadow 表达眼皮线在眼白上的阴影，通过与 Face 配套的眼睑 Morph 跟随眼型变化。
+
+Face 中的眼皮褶线及下方皮肤着色区域随眼型 Morph 配套形变。独立调整褶线位置的 `PARAM_EYELID_L/R` 暂未映射。
+
 眼睑使用 `Eyelids_Normal`、`Eyelids_Close_L/R`、`Eyelids_SmileB_L/R`、`Eyelids_Smile`、`Eyelids_Open`，同时作用于 Face 和 EyeShadow。半开笑眼的 `Eyelids_Smile` 补充形变仅在这两类网格均具备该通道时叠加；缺失时共同使用 `Eyelids_Close_L/R` 与 `Eyelids_SmileB_L/R` 的开闭混合。嘴部以角色中性闭口为基线，使用 `Mouth_A`、`Mouth_O`、`Mouth_cornerUP_L/R`、`Mouth_cornerDown_L/R`、`Mouth_UP`、`Mouth_Down`；`Up`/`UP` 两种源名称分别绑定。缺少 `Mouth_O` 的模型保留 `Mouth_A` 张口开度，圆口形状受源模型能力限制。中性眉使用所属组的配方，独立平移、旋转和曲率在此基础上计算。
 
 眉毛的活动网格按中性状态下的可见连通部分确定。形变后依据当前 Face 表面，为左右主眉分别计算保持眉形的整体深度避让；源模型藏于皮下的备用表情网格保留原深度。
@@ -25,7 +29,6 @@
 | 参数 | 表现 |
 | --- | --- |
 | `PARAM_EYE_L/R_OPEN`、`PARAM_EYE_L/R_SMILE` | 左右独立开闭、笑眼及超开，开度范围 0–1.5 |
-| `PARAM_EYELID_L/R` | 独立眼皮线纵向位移 |
 | `PARAM_EYE_BALL_X/Y` | 虹膜与配套高光的视线位移 |
 | `PARAM_EYE_SCALE` | 虹膜大小 |
 | `PARAM_EYE_HIGHLIGHT` | 独立高光大小 |
