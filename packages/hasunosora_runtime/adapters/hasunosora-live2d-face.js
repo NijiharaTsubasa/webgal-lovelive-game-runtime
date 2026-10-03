@@ -219,7 +219,8 @@ export class HasunosoraLive2dFace {
     this.defaults = {};
     this.workspaces = [];
     this.underlay = null;
-    this.cacheKey = null;
+    this.faceCacheKey = null;
+    this.eyeCacheKey = null;
     this.part = context.parts.find((part) => HASUNOSORA_FACE_PROFILES[part.component.motionGroup]);
     if (!this.part) throw new Error('Hasunosora parameter face requires a supported character motionGroup');
     this.profile = HASUNOSORA_FACE_PROFILES[this.part.component.motionGroup];
@@ -239,6 +240,9 @@ export class HasunosoraLive2dFace {
         });
         this.parts[part] = [...new Set(this.parts[part])];
       }
+      this.faceWorkspaces = new Set([...this.parts.Face, ...this.parts.Brow, ...this.parts.EyeShadow]);
+      this.eyeWorkspaces = new Set(this.parts.Eye);
+      this.sharedFaceEyeWorkspace = this.parts.Eye.some((work) => this.faceWorkspaces.has(work));
       const eye = this.parts.Eye[0];
       this.eyeBounds = Object.fromEntries(SIDES.map((side) => [side, sideBounds(eye, null, side)]));
       this.eyeDistance = Math.max(0.001, Math.abs(this.eyeBounds.L.center[0] - this.eyeBounds.R.center[0]));
@@ -320,19 +324,28 @@ export class HasunosoraLive2dFace {
         }
       }
     }
-    const key = JSON.stringify(controls), changed = key !== this.cacheKey;
-    if (changed) {
-      for (const work of this.workspaces) work.reset();
+    const faceKey = JSON.stringify([controls.eyes, controls.brows, controls.mouth, controls.tear]);
+    const eyeKey = JSON.stringify([controls.gaze, controls.highlight]);
+    let faceChanged = faceKey !== this.faceCacheKey, eyeChanged = eyeKey !== this.eyeCacheKey;
+    // A source geometry can serve both semantic groups; preserve their original
+    // combined operation order whenever either input changes that workspace.
+    if (this.sharedFaceEyeWorkspace && (faceChanged || eyeChanged)) faceChanged = eyeChanged = true;
+    const changed = (work) => (faceChanged && this.faceWorkspaces.has(work)) || (eyeChanged && this.eyeWorkspaces.has(work));
+    for (const work of this.workspaces) if (changed(work)) work.reset();
+    if (faceChanged) {
       this.applyEyes(controls.eyes);
       this.applyBrows(controls.brows);
       this.applyMouth(controls.mouth);
-      this.applyGaze(controls.gaze, controls.highlight);
+    }
+    if (eyeChanged) this.applyGaze(controls.gaze, controls.highlight);
+    if (faceChanged) {
       for (const work of this.parts.Face)
         work.add(work.target('Other_Tear'), controls.tear);
       this.clearBrows();
-      this.cacheKey = key;
     }
-    for (const work of this.workspaces) work.activate(changed);
+    this.faceCacheKey = faceKey;
+    this.eyeCacheKey = eyeKey;
+    for (const work of this.workspaces) work.activate(changed(work));
     return controls;
   }
 

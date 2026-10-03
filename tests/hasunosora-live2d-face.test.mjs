@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { readFile } from 'node:fs/promises';
 import { HASUNOSORA_FACE_PROFILES } from '../packages/hasunosora_runtime/adapters/hasunosora-face-profiles.js';
-import { createExpressionAdapter } from '../packages/hasunosora_runtime/adapters/hasunosora-live2d-face.js';
+import { createExpressionAdapter, HasunosoraLive2dFace } from '../packages/hasunosora_runtime/adapters/hasunosora-live2d-face.js';
+import { originalUpdate } from './fixtures/hasunosora-face-before-group-cache.mjs';
 
 // Hand-authored tiny facial islands: tests need no source bundles or converted GLB.
 // Left/right pieces have distinct vertices; eye closure cannot accidentally pass
@@ -751,4 +752,110 @@ test('fully supported meshes retain the authored partial-smile contribution', ()
   const base = f.geometries.Face.attributes.position.getY(1);
   near(point(f.meshes.Face, 1)[1], base - .004 * .5 * .2 - .003 * .5 * .8 + .001 * .8 * .5 * .5 * 1.6);
   adapter.dispose();
+});
+
+
+function groupedCacheFixture(group, { shared = false, bind = false } = {}) {
+  const f = fixture(group);
+  if (shared) {
+    f.meshes.Eye.geometry = f.meshes.Face.geometry;
+    f.meshes.Eye.updateMorphTargets();
+  }
+  for (const geometry of new Set(Object.values(f.meshes).map(mesh => mesh.geometry))) {
+    geometry.morphAttributes.normal = geometry.morphAttributes.position.map(attribute =>
+      new THREE.Float32BufferAttribute(Array.from(attribute.array, value => value * .13), 3));
+  }
+  for (const mesh of Object.values(f.meshes)) {
+    if (bind) {
+      const head = new THREE.Bone(); head.name = 'Head';
+      mesh.skeleton = new THREE.Skeleton([head], [new THREE.Matrix4().compose(
+        new THREE.Vector3(.04, -.03, .07), new THREE.Quaternion().setFromEuler(new THREE.Euler(.11, -.21, .3)),
+        new THREE.Vector3(1.1, .9, 1.2))]);
+      mesh.bindMatrix = new THREE.Matrix4().makeRotationZ(.17).setPosition(.02, -.01, .04);
+    }
+    const pass = mesh.clone(); pass.userData.__parameterizedPassObject = true;
+    pass.morphTargetInfluences = [...mesh.morphTargetInfluences]; f.root.add(pass);
+  }
+  f.allMeshes = []; f.root.traverse(object => { if (object.isMesh) f.allMeshes.push(object); });
+  return f;
+}
+
+function cacheOutput(f) {
+  const bytes = attribute => attribute ? Buffer.from(attribute.array.buffer,
+    attribute.array.byteOffset, attribute.array.byteLength) : null;
+  return f.allMeshes.map(mesh => ({
+    position: bytes(mesh.geometry.attributes.position), normal: bytes(mesh.geometry.attributes.normal),
+    weights: [...mesh.morphTargetInfluences], culled: mesh.frustumCulled,
+    local: [...mesh.position.toArray(), ...mesh.quaternion.toArray(), ...mesh.scale.toArray()],
+  }));
+}
+
+function nativeFrame(f, frame) {
+  f.allMeshes.forEach((mesh, index) => {
+    for (let j = 0; j < mesh.morphTargetInfluences.length; j++)
+      mesh.morphTargetInfluences[j] = Math.sin(frame * .1 + index + j) * .3;
+    mesh.position.x = Math.sin(frame * .2 + index) * .01;
+  });
+}
+
+function compareGroupCache(group, options) {
+  const f = groupedCacheFixture(group, options), reference = groupedCacheFixture(group, options);
+  const driver = new HasunosoraLive2dFace(f.context), old = new HasunosoraLive2dFace(reference.context);
+  old.update = originalUpdate;
+  for (const item of [driver, old]) for (const work of item.workspaces) work.restoreAttributes();
+  const base = { PARAM_BROW_L_Y: .8, PARAM_BROW_R_FORM: -.4, PARAM_EYE_R_OPEN: .6, PARAM_MOUTH_OPEN_Y: .35 };
+  for (let frame = 0; frame < 90; frame++) {
+    driver.beginFrame(); old.beginFrame(); nativeFrame(f, frame); nativeFrame(reference, frame);
+    const native = snapshot(f), nativeReference = snapshot(reference);
+    const t = frame % 9;
+    const parameters = t < 3 ? base : t < 6
+      ? { ...base, PARAM_EYE_BALL_X: Math.sin(frame), PARAM_EYE_HIGHLIGHT: .4, PARAM_EYE_SCALE: -.2 }
+      : { ...base, PARAM_TEAR: .3, PARAM_MOUTH_FORM_01: -.5, PARAM_EYE_L_SMILE: .23 };
+    // Includes A-B-A, same effective control through defaults, and ignored parameters.
+    const defaults = frame % 2 ? parameters : { PARAM_EYE_L_OPEN: 1 };
+    const input = frame % 2 ? { PARAM_EYELID_L: frame } : parameters;
+    assert.deepEqual(driver.setParameters(input, defaults), old.setParameters(input, defaults));
+    assert.deepEqual(driver.update(), old.update());
+    assert.deepEqual(cacheOutput(f), cacheOutput(reference), `${group}/${JSON.stringify(options)}/${frame}`);
+    driver.beginFrame(); old.beginFrame();
+    assertRestored(f, native); assertRestored(reference, nativeReference);
+    assert.deepEqual(cacheOutput(f), cacheOutput(reference));
+  }
+  const before = snapshot(f), oldBefore = snapshot(reference);
+  driver.setParameters(base); old.setParameters(base); driver.update(); old.update();
+  driver.dispose(); old.dispose(); assertRestored(f, before); assertRestored(reference, oldBefore);
+  assert.deepEqual(cacheOutput(f), cacheOutput(reference));
+}
+
+test('split face/eye cache exactly matches frozen update bytes with native underlays, defaults and nonidentity binds', () => {
+  for (const group of groups) for (const bind of [false, true]) compareGroupCache(group, { bind });
+});
+
+test('shared Face/Eye workspace couples both dirty groups and matches original operation order', () => {
+  for (const group of groups) compareGroupCache(group, { shared: true, bind: true });
+});
+
+test('independent gaze/highlight and face changes skip unrelated geometry but still activate and restore every workspace', () => {
+  const f = groupedCacheFixture('old'), driver = new HasunosoraLive2dFace(f.context);
+  const counts = { face: 0, eye: 0, clear: 0, activate: 0 };
+  for (const [method, key] of [['applyEyes', 'face'], ['applyGaze', 'eye'], ['clearBrows', 'clear']]) {
+    const original = driver[method]; driver[method] = function (...args) { counts[key]++; return original.apply(this, args); };
+  }
+  for (const work of driver.workspaces) {
+    const original = work.activate; work.activate = function (...args) { counts.activate++; return original.apply(this, args); };
+  }
+  const apply = parameters => { driver.setParameters(parameters); driver.update(); };
+  apply({});
+  const faceVersion = f.meshes.Face.geometry.attributes.position.version;
+  apply({ PARAM_EYE_BALL_X: .35, PARAM_EYE_HIGHLIGHT: .6 });
+  assert.equal(counts.face, 1); assert.equal(counts.clear, 1); assert.equal(counts.eye, 2);
+  assert.equal(f.meshes.Face.geometry.attributes.position.version, faceVersion);
+  const eyeVersion = f.meshes.Eye.geometry.attributes.position.version;
+  apply({ PARAM_EYE_BALL_X: .35, PARAM_EYE_HIGHLIGHT: .6, PARAM_MOUTH_OPEN_Y: .8 });
+  assert.equal(counts.face, 2); assert.equal(counts.clear, 2); assert.equal(counts.eye, 2);
+  assert.equal(f.meshes.Eye.geometry.attributes.position.version, eyeVersion);
+  apply({ PARAM_EYE_BALL_X: .35, PARAM_EYE_HIGHLIGHT: .6, PARAM_MOUTH_OPEN_Y: .8, PARAM_EYELID_L: -.7 });
+  assert.equal(counts.face, 2); assert.equal(counts.eye, 2);
+  assert.equal(counts.activate, driver.workspaces.length * 4);
+  driver.dispose();
 });
