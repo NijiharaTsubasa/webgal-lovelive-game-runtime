@@ -51,9 +51,8 @@ function collectSceneLights(scene, visibleOnly) {
   return lights;
 }
 
-// Runtime hooks share the scene structure until the next renderer frame. A
-// GrabPass render advances that frame too, so its following hooks get a fresh
-// snapshot. Keep all/visible traversals separate: their ancestor rules differ.
+// Runtime hooks share the scene structure until the next renderer frame.
+// Keep all/visible traversals separate: their ancestor rules differ.
 // Only candidate references are cached; per-mesh layers and light values stay live.
 export function sceneLightCandidates(scene, renderer, visibleOnly = false) {
   const frame = renderer?.info?.render?.frame;

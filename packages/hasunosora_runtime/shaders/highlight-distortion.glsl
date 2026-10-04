@@ -32,6 +32,7 @@ varying vec3 vMelpotEyeWorldNormal;
 varying vec4 vMelpotEyeWorldTangent;
 varying vec4 vMelpotEyeClipPos;
 uniform sampler2D uOpaqueTex;
+uniform float uOpaqueTexSRGB;
 uniform float uDistortionIntensity;
 uniform float uTilinegValue;
 uniform float uTime;
@@ -105,8 +106,11 @@ vec3 melpotDistVN = normalize( vec3( melpotDistVx, melpotDistVy, melpotDistVz ) 
 
 // sample the opaque scene at the distorted screen UV
 vec2 melpotDistUv = vMelpotEyeClipPos.xy / max( vMelpotEyeClipPos.w, 1e-8 ) * 0.5 + 0.5;
-// three.js WebGLRenderTarget textures are Y-up (same as clip space NDC),
-// so no Y-flip is needed when sampling an RT directly.
+// FramebufferTexture uses the same Y-up coordinates as clip space NDC.
 melpotDistUv += melpotDistVN.xy * uDistortionIntensity;
-vec3 outgoingLight = texture2D( uOpaqueTex, melpotDistUv ).rgb;
+vec3 melpotOpaqueSample = texture2D( uOpaqueTex, melpotDistUv ).rgb;
+vec3 melpotOpaqueLinear = mix( melpotOpaqueSample / 12.92,
+  pow( ( melpotOpaqueSample + 0.055 ) / 1.055, vec3( 2.4 ) ),
+  step( vec3( 0.04045 ), melpotOpaqueSample ) );
+vec3 outgoingLight = mix( melpotOpaqueSample, melpotOpaqueLinear, uOpaqueTexSRGB );
 // @end
