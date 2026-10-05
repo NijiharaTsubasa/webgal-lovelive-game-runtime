@@ -148,6 +148,16 @@ export default class LlasMemberRuntime {
   }
 
   onBeforeRender(renderer) {
+    if (this.outlineMesh) {
+      // The host keeps ticking runtimes while custom shaders are disabled.
+      // Its material swap is the active-pass state; visibility alone cannot
+      // distinguish a disabled pass from a temporarily hidden board pattern.
+      const material = this.mesh.material;
+      const enabled = Array.isArray(material)
+        ? material.some((item) => item?.userData?.__parameterizedShaderRuntimes?.includes(this))
+        : material?.userData?.__parameterizedShaderRuntimes?.includes(this);
+      this.outlineMesh.visible = this.mesh.visible && !!enabled;
+    }
     if (this.hasOutline) {
       if (!this.renderTextureResolution) {
         throw new Error("LLAS _RenderTextureResolution requires a sized drawing buffer at initialization");

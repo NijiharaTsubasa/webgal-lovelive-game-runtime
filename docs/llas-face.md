@@ -76,13 +76,13 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 
 域之间不能共享显隐输出，同一信号也不重复绑定。每帧各域从 defaults 开始，依次遍历 entries，达到阈值的条目覆盖前面的选择：**最后一个达标条目胜出，不是最大权重胜出**。没有达标条目时回到 defaults。初始化会隐藏输入节点；禁用或销毁时恢复各域默认显隐。
 
-这些快照由原游戏数据和 Unity 解算结果生成，不能通过眼睛/嘴巴开合数值猜测图案。标准表情配方对信号 Morph 写权重，Behavior 再把权重翻译为显隐。
+这些快照记录原游戏数据在 Unity 中求值后的完整显隐。标准表情配方对信号 Morph 写权重，Behavior 再把权重翻译为显隐。
 
 ## 3. BanG Dream 参数表情适配
 
 `llas-garupa-face` 按 `motionGroup: "llas"` 注册，入口为 `createExpressionAdapter(context)`。通用参数输入与生命周期由参数动作与表情标准定义；此处补充模型侧要求。
 
-当前适配器要求普通脸 `LLAS.Face` 声明，璃奈板模型返回 `null`，不使用普通脸适配路径。模型需要：
+普通脸适配器要求 `LLAS.Face` 声明。模型需要：
 
 - `Eye_Around`、`Mouth`、`Face`、`LeftEyeWhiteLine`、`RightEyeWhiteLine`：对应原脸部 Mesh，各自能解析为单个源 primitive。`Face` 提供眉毛深度约束所需的面部表面。
 - `LeftEye_Root`、`RightEye_Root`、`LeftEye2`、`RightEye2`：用于眼球位移、缩放及局部基准测量。
@@ -110,3 +110,20 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 支持的输入包括左右眼开合/笑眼、眼球 XY/缩放、左右眉 XY/角度/曲率、嘴开合/形状/纵向调整/缩放，以及两种脸红。具体参数名和当前映射范围见 [llas-live2d-parameters.js](../packages/llas_runtime/adapters/llas-live2d-parameters.js)。这些是跨媒介标定后的近似映射，不是 LLAS 原游戏表情算法；两种脸红合并为 LLAS 双颊纹理，独立双眼皮参数 `PARAM_EYELID_L/R`、额外眼型、独立高光和眼泪未映射。超出标定范围的输入按对应边界值处理；脸红需要模型与渲染模式提供可用脸红纹理，缺少时其余面部控制仍正常生效。
 
 适配器接管对应脸部原生通道前保存权重，再清除这些通道的贡献并应用参数结果；派生通道、辅助 TRS 和显隐也纳入同一恢复过程。Main／Outline 的权重分别写入和恢复，并共享实例内派生几何。运行时新增的 Morph 通道由它自己释放，无需写回 GLB。脸红通过 Shader 的包内接口控制，见 [Shader 数据接口](shader-data.md)。
+
+### 璃奈板参数表情
+
+`llas-garupa-board` 按 `motionGroup: "llas-rina-board"` 注册，入口为 [llas-live2d-board.js](../packages/llas_runtime/adapters/llas-live2d-board.js) 的 `createExpressionAdapter(context)`。模型提供单个 integrated `LLAS.BoardFace` 声明及完整的 eye、mouth 显隐快照；初始化绑定节点和信号，缺失或重复的引用会报错。
+
+快照条目的信号名采用 `eye/<图案名>`、`mouth/<图案名>`，对应载体中的 Morph。参数适配所需的图案如下：
+
+| 域 | 图案名 |
+| --- | --- |
+| eye | Open、Close、CloseSmile、WinkL、WinkR、Angry、Trouble、Sad、Shy、WideOpen |
+| mouth | Smile、N、A、O、Laugh、Angry、Trouble、Sad、Shy |
+
+适配器根据左右眼开合、笑眼、眉形、眼型、嘴形与脸红选择固定图案。闭眼和左右 Wink 优先于常驻情绪；其他状态按生气、悲伤、困扰、害羞、惊讶、笑和中性的顺序判断组合输入。眼开合、笑眼、嘴开合及情绪阈值使用迟滞，短眨眼即时生效。单边眉、眼球移动和连续脸部形变由有限图案概括，主要用于正面及小角度侧面的表情表达。
+
+闭嘴使用 N 或对应情绪口图案；说话时根据嘴开合幅度选择 O、A，笑或害羞时使用 Laugh。嘴幅只表达开合程度，不提供音素信息。停止说话后恢复闭口图案。
+
+每帧恢复上次覆盖，保存原生求值后的显隐，再应用完整图案快照；关闭或销毁适配器会释放覆盖。LLAS Member 的 Outline 在绘制前跟随源 Mesh 显隐，并遵守自定义 Shader 的启用状态。

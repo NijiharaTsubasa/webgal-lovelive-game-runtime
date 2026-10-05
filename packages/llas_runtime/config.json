@@ -82,6 +82,13 @@
       "description": "LLAS ordinary-face adaptation for BanG Dream source parameters",
       "motionGroup": "llas",
       "script": "adapters/llas-live2d-face.js"
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "llas-garupa-board",
+      "description": "LLAS Rina-board adaptation for BanG Dream source parameters",
+      "motionGroup": "llas-rina-board",
+      "script": "adapters/llas-live2d-board.js"
     }
   ]
 }
