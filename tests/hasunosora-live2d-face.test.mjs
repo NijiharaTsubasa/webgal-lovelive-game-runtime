@@ -188,7 +188,8 @@ test('independent eyelid-line parameters keep the face aperture and its shadow p
 test('neutral input uses character basal shape without reading named emotional recipes', () => {
   const a = fixture('old'), b = fixture('old');
   b.component.morphPoses = [{ name: 'normal', targets: { 'Face Renderer': { 'Face_.Mouth_A': 123 } } }];
-  b.component.expressions = [{ name: 'normal', selections: { face: 'impossible' } }];
+  b.component.expressionGroups = [{name:'face',type:'eye',states:[{name:'normal',poses:{normal:123}}]}];
+  b.component.defaultExpression = {eye:'normal'};
   const da = createExpressionAdapter(a.context), db = createExpressionAdapter(b.context);
   da.apply({}, { time: 0, delta: 0 }); db.apply({}, { time: 0, delta: 0 });
   for (const kind of Object.keys(a.meshes)) for (let i = 0; i < a.meshes[kind].geometry.attributes.position.count; i++)

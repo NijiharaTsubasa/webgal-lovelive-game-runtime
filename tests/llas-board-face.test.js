@@ -60,8 +60,8 @@ test('group motion drives dummy signals through the unchanged expression/Behavio
     const root=new THREE.Group();root.add(input,...Object.values(nodes).filter(n=>n!==input));
     registerExpressionNodes({scene:root,parser:{associations:new Map([[input,{nodes:0,meshes:0,primitives:0}]]),json:{nodes:[{name:'signal'}]}}});
     const definition={morphPoses:[{name:'close',targets:{signal:{close:1}}}],
-      expressionGroups:[{name:'eye',states:[{name:'Close',poses:{close:1}}]}],
-      expressions:[{name:'Close',selections:{eye:'Close'}}],defaultExpression:'Close'};
+      expressionGroups:[{name:'eye',type:'eye',states:[{name:'Close',poses:{close:1}}]}],
+      defaultExpression:{eye:'Close'}};
     const expression=new ExpressionController(root,definition);
     const data={clips:[{id:'board',duration:1,sampleRate:1,frames:2,tracks:[],
       groupTracks:[{kind:'morph',node:'signal',property:'close',values:[1,1]}]}],
