@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BufferGeometry, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial, Vector3 } from 'three';
 import * as THREE from 'three';
-import { LlasLive2dFace, createExpressionAdapter } from '../packages/llas_runtime/adapters/llas-live2d-face.js';
+import { LlasLive2dFace, createExpressionAdapter, createFocusAdapter } from '../packages/llas_runtime/adapters/llas-live2d-face.js';
 
 const sourceName=(kind,name)=>({eye:{open:'EyeBlendShape.eye_facial_003',close:'EyeBlendShape.eye_facial_001',smile:'EyeBlendShape.eye_facial_005',wide:'EyeBlendShape.eye_facial_004',sad:'EyeBlendShape.eye_facial_015'},mouth:{smile:'MouthBlendShape.mouth_facial_007',a:'MouthBlendShape.mouth_facial_001',o:'MouthBlendShape.mouth_facial_005',sad:'MouthBlendShape.mouth_facial_010'},Left:{close:'LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_001',smile:'LeftEyeWhiteLineBlendShape.LeftEye_LineWhite_002'},Right:{close:'RightEyeWhiteLineBlendShape.RightEye_LineWhite_001',smile:'RightEyeWhiteLineBlendShape.RightEye_LineWhite_002'}}[kind]?.[name]??name);
 const named=(kind,targets)=>Object.fromEntries(Object.entries(targets).map(([name,value])=>[sourceName(kind,name),value]));
@@ -107,6 +107,28 @@ function point(mesh,index){
   }
   return p.toArray();
 }
+
+test('native LLAS gaze adds to current eye companions, restores and never owns native Morphs',()=>{
+  const f=fixture(), adapter=createFocusAdapter(f.character);
+  const left=f.nodes.get('LeftEye_Root'), right=f.nodes.get('RightEye_Root');
+  f.weight(f.eye,'close',.65);
+  const morphs=[...f.eye.morphTargetInfluences], baseline=left.position.clone();
+  adapter.apply({x:.5,y:-.25});
+  near(left.position.x-baseline.x,.5*.038*2);
+  near(left.position.y-baseline.y,-.25*.038*2);
+  const shifted=left.position.clone();
+  adapter.apply({x:.5,y:-.25});nearArray(left.position.toArray(),shifted.toArray());
+  assert.deepEqual(f.eye.morphTargetInfluences,morphs);
+  adapter.restore();nearArray(left.position.toArray(),baseline.toArray());
+  left.position.y+=.02;const next=left.position.clone();
+  adapter.apply({x:-1,y:1});adapter.apply({x:0,y:0});
+  nearArray(left.position.toArray(),next.toArray());
+  const second=fixture(), another=createFocusAdapter(second.character);
+  another.apply({x:-.3,y:.7});
+  nearArray(left.position.toArray(),next.toArray());
+  another.dispose();adapter.dispose();
+  near(right.position.x,-1);
+});
 function state(f){return {
   eye:[...f.eye.morphTargetInfluences],mouth:[...f.mouth.morphTargetInfluences],
   nodes:[...f.nodes].map(([name,o])=>[name,o.position.toArray(),o.scale.toArray(),o.visible]),

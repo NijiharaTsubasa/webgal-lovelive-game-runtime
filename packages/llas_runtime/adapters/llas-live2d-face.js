@@ -441,3 +441,44 @@ export function createExpressionAdapter(context) {
     },
   };
 }
+
+// Host gaze is an additive adaptation, applied after the native face writer.
+// Parameter faces already own these roots and use their own gaze path instead.
+export function createFocusAdapter(context) {
+  const part = context.parts.find((part) =>
+    part.component.behaviors?.some((behavior) => behavior.name === 'LLAS.Face'));
+  if (!part) return null;
+  const declaration = part.component.behaviors.find((behavior) => behavior.name === 'LLAS.Face');
+  const rig = {
+    root: context.root,
+    resolve: (name) => context.resolveNode(part.role, name),
+    bindings: declaration.parameters.bindings.map((binding) => ({
+      ...binding, object: context.resolveNode(part.role, binding.node),
+    })),
+  };
+  rig.eyeMesh = LlasLive2dFace.prototype.resolveMesh.call(rig, 'Eye_Around');
+  LlasLive2dFace.prototype.measureEyeRig.call(rig, context.THREE);
+  const saved = Object.values(rig.eyeBones).map((bone) => ({ bone, position: bone.position.clone() }));
+  let active = false;
+  const restore = () => {
+    if (!active) return;
+    for (const item of saved) item.bone.position.copy(item.position);
+    active = false;
+  };
+  return {
+    restore,
+    apply({ x, y }) {
+      restore();
+      if (!x && !y) return;
+      for (const item of saved) item.position.copy(item.bone.position);
+      for (const [side, bone] of Object.entries(rig.eyeBones)) {
+        rig.origin.set(0, 0, 0).applyMatrix4(rig.gazeBasis[side]);
+        rig.localShift.set(x * .038 * rig.eyeDistance, y * .038 * rig.eyeDistance, 0)
+          .applyMatrix4(rig.gazeBasis[side]).sub(rig.origin);
+        bone.position.add(rig.localShift);
+      }
+      active = true;
+    },
+    dispose: restore,
+  };
+}

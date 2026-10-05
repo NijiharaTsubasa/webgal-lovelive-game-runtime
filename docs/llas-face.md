@@ -111,6 +111,12 @@ TRS 已转换为输出模型的局部坐标系；不能把原 Unity 局部值直
 
 适配器接管对应脸部原生通道前保存权重，再清除这些通道的贡献并应用参数结果；派生通道、辅助 TRS 和显隐也纳入同一恢复过程。Main／Outline 的权重分别写入和恢复，并共享实例内派生几何。运行时新增的 Morph 通道由它自己释放，无需写回 GLB。脸红通过 Shader 的包内接口控制，见 [Shader 数据接口](shader-data.md)。
 
+### 宿主注视输入
+
+普通脸模块额外导出 `createFocusAdapter(context)`，返回 `restore()`、`apply({x, y})` 和 `dispose()`。`x/y` 是已平滑的 −1–1 注视偏移；宿主在自带表情与物理更新之后调用 `apply`，在下一次姿态求值之前调用 `restore`。适配器向 `LeftEye_Root`、`RightEye_Root` 叠加脸部局部位移，保留当前眼型的辅助 TRS、显隐和 Morph。零输入与销毁均释放附加位移。
+
+参数表情模式使用 `PARAM_EYE_BALL_X/Y` 合并注视输入，由参数适配器统一写入眼球。璃奈板是固定图案，没有可独立移动的眼球；其注视效果由宿主头部运动表达。
+
 ### 璃奈板参数表情
 
 `llas-garupa-board` 按 `motionGroup: "llas-rina-board"` 注册，入口为 [llas-live2d-board.js](../packages/llas_runtime/adapters/llas-live2d-board.js) 的 `createExpressionAdapter(context)`。模型提供单个 integrated `LLAS.BoardFace` 声明及完整的 eye、mouth 显隐快照；初始化绑定节点和信号，缺失或重复的引用会报错。

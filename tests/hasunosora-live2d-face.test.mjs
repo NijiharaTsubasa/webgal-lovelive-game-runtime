@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { readFile } from 'node:fs/promises';
 import { HASUNOSORA_FACE_PROFILES } from '../packages/hasunosora_runtime/adapters/hasunosora-face-profiles.js';
-import { createExpressionAdapter, HasunosoraLive2dFace } from '../packages/hasunosora_runtime/adapters/hasunosora-live2d-face.js';
+import { createExpressionAdapter, createFocusAdapter, HasunosoraLive2dFace } from '../packages/hasunosora_runtime/adapters/hasunosora-live2d-face.js';
 import { originalUpdate } from './fixtures/hasunosora-face-before-group-cache.mjs';
 
 // Hand-authored tiny facial islands: tests need no source bundles or converted GLB.
@@ -103,6 +103,26 @@ function fixture(character = 'kaho', shared = undefined) {
     } };
   return { root, nodes, meshes, geometries, component, context };
 }
+
+test('native Hasunosora Focus preserves eye Morphs and source geometry across every face group', () => {
+  for (const group of groups) {
+    const f=fixture(group), source=f.meshes.Eye.geometry;
+    const adapter=createFocusAdapter(f.context);
+    f.meshes.Eye.morphTargetInfluences[0]=.7;
+    const weights=[...f.meshes.Eye.morphTargetInfluences];
+    const original=Array.from(source.attributes.position.array);
+    adapter.apply({x:.5,y:-.25});
+    const shifted=Array.from(f.meshes.Eye.geometry.attributes.position.array);
+    near(shifted[0]-original[0],.5*.038*.08);
+    near(shifted[1]-original[1],-.25*.038*.08);
+    assert.deepEqual(f.meshes.Eye.morphTargetInfluences,weights);
+    adapter.restore();assert.equal(f.meshes.Eye.geometry,source);
+    adapter.apply({x:.5,y:-.25});
+    assert.deepEqual(Array.from(f.meshes.Eye.geometry.attributes.position.array),shifted);
+    adapter.apply({x:0,y:0});assert.equal(f.meshes.Eye.geometry,source);
+    adapter.dispose();assert.deepEqual(Array.from(source.attributes.position.array),original);
+  }
+});
 
 function point(mesh, index) {
   const value = new THREE.Vector3().fromBufferAttribute(mesh.geometry.attributes.position, index);

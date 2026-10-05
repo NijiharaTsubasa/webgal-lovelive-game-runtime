@@ -445,3 +445,50 @@ export function createExpressionAdapter(context) {
     dispose() { driver.dispose(); },
   };
 }
+
+// Focus changes only the iris/highlight base positions. Native Morph weights
+// remain on the objects and are still evaluated by their original materials.
+export function createFocusAdapter(context) {
+  const part = context.parts.find((part) => HASUNOSORA_FACE_PROFILES[part.component.motionGroup]);
+  if (!part) return null;
+  const works = [];
+  try {
+    const seen = new Set();
+    for (const mesh of sourceMeshes(context.resolveNode(part.role, 'Eye Renderer'))) {
+      if (seen.has(mesh.geometry)) continue;
+      const work = new FaceWorkspace(context.root, mesh, context.THREE);
+      seen.add(work.source);
+      seen.add(work.geometry);
+      const left = sideBounds(work, null, 'L'), right = sideBounds(work, null, 'R');
+      work.focusDistance = Math.max(.001, Math.abs(left.center[0] - right.center[0]));
+      works.push(work);
+    }
+    for (const work of works) work.restoreAttributes();
+  } catch (error) {
+    for (const work of works) work.dispose();
+    throw error;
+  }
+  let cacheX, cacheY;
+  return {
+    restore() { for (const work of works) work.restoreAttributes(); },
+    apply({ x, y }) {
+      if (!x && !y) {
+        for (const work of works) work.restoreAttributes();
+        return;
+      }
+      const changed = x !== cacheX || y !== cacheY;
+      for (const work of works) {
+        if (changed) {
+          work.reset();
+          for (let i = 0; i < work.position.count; i++)
+            work.position.setXY(i, work.position.getX(i) + x * .038 * work.focusDistance,
+              work.position.getY(i) + y * .038 * work.focusDistance);
+        }
+        work.activate(changed);
+      }
+      cacheX = x;
+      cacheY = y;
+    },
+    dispose() { for (const work of works) work.dispose(); },
+  };
+}
