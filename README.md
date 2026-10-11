@@ -9,8 +9,9 @@ Behavior 用于实现模型专属的运行时逻辑（相当于 Unity 的 MonoBe
 * `packages/hasunosora_runtime`：莲之空。
 * `packages/garupa_runtime`：BanG Dream。
 * `packages/llas_runtime`：LLAS。
+* `packages/yohane_runtime`：《幻日夜羽：蜃景努玛梓》。
 
-每个目录都是独立资源包，入口为 `config.json` 。使用时将所需目录复制到游戏的 `figure` 目录下，由 Terre 生成资源清单。
+每个目录都是独立资源包，入口为 `config.json` 。使用时将所需目录复制到游戏的 `game/3d/runtime` 目录下。
 
 ## 已实现功能清单
 
@@ -19,6 +20,7 @@ Behavior 用于实现模型专属的运行时逻辑（相当于 Unity 的 MonoBe
 | 《LoveLive! 学园偶像祭 群星闪耀》 | ✅已完成 | ✅表情适配、璃奈板适配 | ✅已完成，含璃奈板 |
 | 《Link! Like! LoveLive!》 | ✅已完成 | ✅模型辅助骨 | ✅已完成，覆盖所有角色 |
 | 《BanG Dream! 少女乐团派对》 | ❌仅预研，未启动 | ✅AvatarScaler（部分行为为近似还原） | ❌未启动 |
+| 《幻日夜羽：蜃景努玛梓》 | ✅已完成 | 不涉及 | ✅已完成 |
 
 JS 与渲染器之间的通用接口见 [渲染器仓库的标准文档](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer) ；各游戏运行时与模型配置、glTF 数据之间的自定义约定见 [游戏运行时数据接口](docs/README.md) 。
 

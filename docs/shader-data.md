@@ -48,3 +48,19 @@ intensity 钳制为 `[0,1]`；layer 四舍五入并钳制到纹理数组层范�
 `highlight-distortion` 的抓屏纹理由 JS 管理，GLB 不需要引用它；其生命周期和抓取时机属于 Shader 实现。GLSL 材质参数、原贴图、顶点属性和 Pass 顺序仍来自资源，不能用节点名或材质名替代这些数据。
 
 `melpot-toon-hlslmacros` 使用 glTF 的 `TANGENT` 四分量属性，加载为 `tangent`，其中 W 保存切线方向符号。重新生成网格时要与法线、UV 和蒙皮数据一起保留；它不是材质 uniform。
+
+## 5. 幻日夜羽角色管线
+
+模型组件声明 `renderProfile: "yohane-character"`。配置包使用 `yohane-toon`、`yohane-toon-double-side` 和 `yohane-aura`；法线预通道、颜色绘制、屏幕描边、透明绘制和 Bloom 泛光由同一配置组织。法线纹理保存带符号的世界法线，需要支持浮点颜色附件的 WebGL2 上下文。
+
+绘制阶段由源材质的 `renderQueue` 决定：0～2500 进入不透明阶段，2501～5000 进入透明阶段。表面 Aura 使用材质 Pass 绘制；带有 AuraArc 的模型还绘制动态粒子光弧，并读取当前不透明深度实现交界处淡出。
+
+Bloom 使用原剧情相机的阈值、强度和低质量滤波配置，在半分辨率 HDR 纹理上构建模糊金字塔，再合成至角色颜色。透明角色画布根据泛光亮度生成外层覆盖度，使柔光逐渐淡出；外部背景通过普通透明混合叠加，因此其合成观感与原游戏整场景加法泛光存在差异。
+
+模型私有元数据保存原 AuraArc 组件的采样网格、变换和属性覆盖值。运行时按源顶点顺序采样当前蒙皮及形变结果，执行粒子、噪声和光带计算；曲线资源由 Unity 原生烘焙。宿主生成初始随机 seed，按固定步长推进模拟，并将光带四角拆为两个三角形绘制。这些适配由 Yohane 配置包管理。
+
+颜色 Pass 的私有元数据 `extras.depthNormalsPass` 与 `extras.shadowCasterPass` 保存对应辅助变体的 Pass ID。模型材质参数表同时提供辅助 Pass 实际读取的参数和纹理；配置包通过材质工厂选取法线 Pass。普通颜色 Pass 与法线 Pass 的关键字组合分别选择，例如 `_FLATNORMAL_ON` 影响法线预通道。
+
+材质参数使用 Unity 传给 Shader 的数值：普通 Color 的 RGB 转为线性，HDR Color 与普通 Vector 保留原值，alpha 保留原值。各纹理的颜色空间和采样状态由资源数据提供。纹理坐标先恢复来源 UV，再应用来源 ST；取样坐标的纵轴翻转对应导出图像的方向。
+
+`unity-inputs.js` 将宿主的模型、相机和方向光矩阵转换到原 Shader 坐标约定。配置包提供播放时钟，灯光取当前可见方向光中强度最大的一个。描边读取当前帧的法线与深度，并按原材质设置执行 Multiply 合成。

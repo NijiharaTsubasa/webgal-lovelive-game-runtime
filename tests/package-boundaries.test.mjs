@@ -9,6 +9,7 @@ const expected = {
   hasunosora_runtime: ['shader', 'behavior', 'garupa-expression-adapter'],
   garupa_runtime: ['behavior'],
   llas_runtime: ['shader', 'behavior', 'garupa-expression-adapter'],
+  'yohane_runtime': ['garupa-expression-adapter', 'render-profile', 'shader'],
 };
 
 async function files(directory) {

@@ -1,0 +1,533 @@
+{
+  "components": [
+    {
+      "type": "garupa-expression-adapter",
+      "name": "yohane-garupa-face",
+      "description": "幻日夜羽角色的 BanG Dream 参数表情适配器",
+      "motionGroup": "yohane",
+      "script": "adapters/yohane-live2d-face.js"
+    },
+    {
+      "type": "shader",
+      "name": "yohane-toon",
+      "src": "shaders/yohane-toon.glsl",
+      "script": "shaders/unity-inputs.js",
+      "samplers": [
+        {
+          "name": "BaseMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "SpecGlossMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "ShadowColorMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "passes": [
+        {
+          "id": "Forward_BASE",
+          "sections": {
+            "vertexPrelude": "Forward_BASE_vertexPrelude",
+            "vertexProject": "Forward_BASE_vertexProject",
+            "fragmentPrelude": "Forward_BASE_fragmentPrelude",
+            "fragmentBody": "Forward_BASE_fragmentBody"
+          }
+        },
+        {
+          "id": "Forward_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "Forward_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "Forward_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "Forward_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "Forward_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "Forward_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "Forward_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "Forward_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "Forward_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "Forward_ALPHATEST_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "Forward_ALPHATEST_ON_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "Forward_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "Forward_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "Forward_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "Forward_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "DepthNormals_BASE",
+          "sections": {
+            "vertexPrelude": "DepthNormals_BASE_vertexPrelude",
+            "vertexProject": "DepthNormals_BASE_vertexProject",
+            "fragmentPrelude": "DepthNormals_BASE_fragmentPrelude",
+            "fragmentBody": "DepthNormals_BASE_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_FLATNORMAL_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_FLATNORMAL_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_FLATNORMAL_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_FLATNORMAL_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_FLATNORMAL_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_ALPHATEST_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "ShadowCaster_BASE",
+          "sections": {
+            "vertexPrelude": "ShadowCaster_BASE_vertexPrelude",
+            "vertexProject": "ShadowCaster_BASE_vertexProject",
+            "fragmentPrelude": "ShadowCaster_BASE_fragmentPrelude",
+            "fragmentBody": "ShadowCaster_BASE_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "ShadowCaster_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "ShadowCaster_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "ShadowCaster_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "ShadowCaster_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "ShadowCaster_ALPHATEST_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 2,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "yohane-toon-double-side",
+      "src": "shaders/yohane-toon-double-side.glsl",
+      "script": "shaders/unity-inputs.js",
+      "samplers": [
+        {
+          "name": "BaseMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "SpecGlossMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "ShadowColorMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        },
+        {
+          "name": "BaseMap2",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "SpecGlossMap2",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "ShadowColorMap2",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              0,
+              0,
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "passes": [
+        {
+          "id": "ForwardFront_BASE",
+          "sections": {
+            "vertexPrelude": "ForwardFront_BASE_vertexPrelude",
+            "vertexProject": "ForwardFront_BASE_vertexProject",
+            "fragmentPrelude": "ForwardFront_BASE_fragmentPrelude",
+            "fragmentBody": "ForwardFront_BASE_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardFront_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "ForwardFront_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "ForwardFront_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "ForwardFront_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "ForwardFront_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardFront_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "ForwardFront_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "ForwardFront_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "ForwardFront_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "ForwardFront_ALPHATEST_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardFront_ALPHATEST_ON_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "ForwardFront_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "ForwardFront_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "ForwardFront_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "ForwardFront_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardBack_BASE",
+          "sections": {
+            "vertexPrelude": "ForwardBack_BASE_vertexPrelude",
+            "vertexProject": "ForwardBack_BASE_vertexProject",
+            "fragmentPrelude": "ForwardBack_BASE_fragmentPrelude",
+            "fragmentBody": "ForwardBack_BASE_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardBack_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "ForwardBack_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "ForwardBack_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "ForwardBack_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "ForwardBack_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardBack_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "ForwardBack_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "ForwardBack_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "ForwardBack_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "ForwardBack_ALPHATEST_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "ForwardBack_ALPHATEST_ON_HAIRHIGHLIGHT_ON",
+          "sections": {
+            "vertexPrelude": "ForwardBack_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexPrelude",
+            "vertexProject": "ForwardBack_ALPHATEST_ON_HAIRHIGHLIGHT_ON_vertexProject",
+            "fragmentPrelude": "ForwardBack_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentPrelude",
+            "fragmentBody": "ForwardBack_ALPHATEST_ON_HAIRHIGHLIGHT_ON_fragmentBody"
+          }
+        },
+        {
+          "id": "DepthNormals_BASE",
+          "sections": {
+            "vertexPrelude": "DepthNormals_BASE_vertexPrelude",
+            "vertexProject": "DepthNormals_BASE_vertexProject",
+            "fragmentPrelude": "DepthNormals_BASE_fragmentPrelude",
+            "fragmentBody": "DepthNormals_BASE_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_FLATNORMAL_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_FLATNORMAL_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_FLATNORMAL_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_FLATNORMAL_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_FLATNORMAL_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_ALPHATEST_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON",
+          "sections": {
+            "vertexPrelude": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_vertexPrelude",
+            "vertexProject": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_vertexProject",
+            "fragmentPrelude": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_fragmentPrelude",
+            "fragmentBody": "DepthNormals_ALPHATEST_ON_FLATNORMAL_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "ShadowCaster_BASE",
+          "sections": {
+            "vertexPrelude": "ShadowCaster_BASE_vertexPrelude",
+            "vertexProject": "ShadowCaster_BASE_vertexProject",
+            "fragmentPrelude": "ShadowCaster_BASE_fragmentPrelude",
+            "fragmentBody": "ShadowCaster_BASE_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        },
+        {
+          "id": "ShadowCaster_ALPHATEST_ON",
+          "sections": {
+            "vertexPrelude": "ShadowCaster_ALPHATEST_ON_vertexPrelude",
+            "vertexProject": "ShadowCaster_ALPHATEST_ON_vertexProject",
+            "fragmentPrelude": "ShadowCaster_ALPHATEST_ON_fragmentPrelude",
+            "fragmentBody": "ShadowCaster_ALPHATEST_ON_fragmentBody"
+          },
+          "renderState": {
+            "zWrite": 1,
+            "zTest": 4,
+            "cull": 0,
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "yohane-aura",
+      "src": "shaders/yohane-aura.glsl",
+      "script": "shaders/unity-inputs.js",
+      "samplers": [],
+      "passes": [
+        {
+          "id": "Forward_BASE",
+          "sections": {
+            "vertexPrelude": "Forward_BASE_vertexPrelude",
+            "vertexProject": "Forward_BASE_vertexProject",
+            "fragmentPrelude": "Forward_BASE_fragmentPrelude",
+            "fragmentBody": "Forward_BASE_fragmentBody"
+          }
+        },
+        {
+          "id": "Forward_SURFACE_TYPE_TRANSPARENT",
+          "sections": {
+            "vertexPrelude": "Forward_SURFACE_TYPE_TRANSPARENT_vertexPrelude",
+            "vertexProject": "Forward_SURFACE_TYPE_TRANSPARENT_vertexProject",
+            "fragmentPrelude": "Forward_SURFACE_TYPE_TRANSPARENT_fragmentPrelude",
+            "fragmentBody": "Forward_SURFACE_TYPE_TRANSPARENT_fragmentBody"
+          }
+        }
+      ]
+    },
+    {
+      "type": "render-profile",
+      "name": "yohane-character",
+      "script": "render-profiles/yohane-character.js",
+      "requiredShaders": [
+        "yohane-toon",
+        "yohane-toon-double-side",
+        "yohane-aura"
+      ]
+    }
+  ]
+}
