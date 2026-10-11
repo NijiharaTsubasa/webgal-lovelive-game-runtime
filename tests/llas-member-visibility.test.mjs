@@ -19,8 +19,10 @@ function fixture({ array = false, name = 'eye_neutral', visible = true } = {}) {
   const main = base.clone();
   const runtime = new LlasMemberRuntime(THREE, renderer, main, mesh);
   main.userData.__parameterizedShaderRuntimes = [runtime];
-  runtime.createPass('Main', main, mesh, { extras: { keywords: [] } });
-  const outline = runtime.createPass('Outline', base.clone(), mesh, {});
+  runtime.configurePass('Main', main, mesh, { extras: { keywords: [] } });
+  const outlineMaterial = base.clone();
+  runtime.configurePass('Outline', outlineMaterial, mesh, {});
+  const [outline] = runtime.createPassObjects('Outline', outlineMaterial, mesh, {});
   // Match the renderer's realized pass metadata and material replacement.
   outline.userData.__parameterizedPassObject = true;
   outline.userData.__parameterizedBaseVisible = mesh.visible;

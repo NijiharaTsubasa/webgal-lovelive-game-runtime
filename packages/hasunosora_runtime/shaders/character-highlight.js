@@ -1,11 +1,10 @@
 export { LightSyncRuntime, TimeRuntime } from "./shared-runtime.js";
 import { findSceneLights, sceneLightCandidates, renderTargetSamples, unityRangeAttenuation, unitySpotCone } from "./shared-runtime.js";
 export class HighlightAlphaClipRuntime {
-  createPass(passId, material) {
-    if (passId !== "Forward") return null;
+  configurePass(passId, material) {
+    if (passId !== "Forward") return;
     // The source clips generated highlight luminance, not glTF base alpha.
     material.alphaTest = 0;
-    return null;
   }
 }
 

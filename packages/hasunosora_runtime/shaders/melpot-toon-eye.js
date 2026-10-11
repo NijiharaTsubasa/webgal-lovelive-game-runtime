@@ -45,11 +45,10 @@ export default class MelpotToonEyeRuntime {
     return this.uniforms;
   }
 
-  createPass(passId, material) {
-    if (passId !== "Forward") return null;
+  configurePass(passId, material) {
+    if (passId !== "Forward") return;
     // The source program owns its alpha clip; glTF MASK must not pre-clip it.
     material.alphaTest = 0;
-    return null;
   }
 
   onBeforeRender(renderer, scene) {

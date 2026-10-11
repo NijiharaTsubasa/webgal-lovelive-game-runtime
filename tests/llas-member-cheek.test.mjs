@@ -16,7 +16,7 @@ function fixture({native = false, declared = true, texture = new THREE.DataArray
   material.customProgramCacheKey = () => 'llas-member:Main';
   const runtime = new LlasMemberRuntime(THREE, null, material, mesh);
   // Same merge order as makePatcher: resolved samplers and material parameters,
-  // followed by runtime inputs. createPass wraps, rather than replaces, it.
+  // followed by runtime inputs. configurePass wraps, rather than replaces, it.
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, {
       uCheekTex: {value: texture},
@@ -24,7 +24,7 @@ function fixture({native = false, declared = true, texture = new THREE.DataArray
       uCheekTexArrayIndex: {value: metadata.shaderParams.CheekTexArrayIndex},
     }, runtime.getUniforms('Main', metadata));
   };
-  runtime.createPass('Main', material, mesh, metadata, {CheekTex: texture});
+  runtime.configurePass('Main', material, mesh, metadata, {CheekTex: texture});
   const compile = () => {
     const shader = {uniforms: {}, fragmentShader: '#include <opaque_fragment>'};
     material.onBeforeCompile(shader);

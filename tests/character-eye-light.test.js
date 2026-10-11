@@ -51,7 +51,7 @@ test("CharacterEye keeps the compiled eight selected-light indices and owns alph
   const mesh = new THREE.Mesh(new THREE.BoxGeometry());
   const pass = new CharacterEyeRuntime(THREE, null, null, mesh);
   const material = new THREE.MeshStandardMaterial({ alphaTest: 0.5 });
-  pass.createPass("Forward", material, mesh, { shaderParams: {
+  pass.configurePass("Forward", material, mesh, { shaderParams: {
     MainTex_ST: [1, 1, 0, 0], MainColor: [1, 1, 1, 1], AlphaClipThreshold: 0.5,
   } }, { MainTex: new THREE.Texture() });
   assert.equal(material.alphaTest, 0);

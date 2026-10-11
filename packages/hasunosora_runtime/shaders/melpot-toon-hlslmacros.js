@@ -39,19 +39,22 @@ export default class HlslMacrosRuntime {
     return this.uniforms;
   }
 
-  createPass(passId, material, mesh) {
+  configurePass(passId, material) {
     // The compiled HLSLMacros passes clip solely from ControlMap1.zw and
     // Transparency. glTF MASK adds an unrelated MainTex alphaTest otherwise.
     material.alphaTest = 0;
+  }
+
+  createPassObjects(passId, material, mesh) {
     if (passId !== "Outline") {
-      return null;
+      return [];
     }
     const outline = mesh.clone();
     outline.name = `${mesh.name || "mesh"}_hlslmacros_outline`;
     outline.material = material;
     if (mesh.parent) mesh.parent.add(outline);
     this.outlineMesh = outline;
-    return outline;
+    return [outline];
   }
 
   onBeforeRender(renderer, scene, camera) {

@@ -111,11 +111,12 @@ test("HLSLMacros source ControlMap clip is not preceded by glTF MainTex alphaTes
   } };
   const textures = { ControlMap1: new THREE.Texture() };
   material.alphaTest = 0.5;
-  runtime.createPass("Forward", material, mesh, pass, textures);
+  runtime.configurePass("Forward", material, mesh, pass, textures);
   assert.equal(material.alphaTest, 0);
   const outline = material.clone();
   outline.alphaTest = 0.5;
-  const outlineMesh = runtime.createPass("Outline", outline, mesh, pass, textures);
+  runtime.configurePass("Outline", outline, mesh, pass, textures);
+  const [outlineMesh] = runtime.createPassObjects("Outline", outline, mesh, pass, textures);
   assert.equal(outline.alphaTest, 0);
   assert.equal(outlineMesh.material, outline);
   runtime.destroy();

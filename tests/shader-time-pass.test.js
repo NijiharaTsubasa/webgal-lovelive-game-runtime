@@ -136,8 +136,9 @@ test("MELPOT package owns its inverted-hull second-pass behavior", async () => {
     dispose() { disposed = true; },
   };
   const pass = new MelpotOutlineRuntime({ BackSide: "back" }, null, {}, source);
-  assert.equal(pass.createPass("Forward", material), null);
-  const outline = pass.createPass("Outline", material);
+  assert.deepEqual(pass.createPassObjects("Forward", material), []);
+  pass.configurePass("Outline", material);
+  const [outline] = pass.createPassObjects("Outline", material);
 
   assert.equal(outline.name, "Face_outline");
   assert.equal(outline.parent, parent);
@@ -389,12 +390,12 @@ test("MELPOT pass disables glTF main-texture alphaTest before source ControlMap1
   const pass = new MelpotToonRuntime(THREE, null, {}, mesh);
   const material = new THREE.MeshStandardMaterial();
   material.alphaTest = 0.5;
-  assert.equal(pass.createPass("Forward", material, mesh, { shaderParams: {
+  assert.equal(pass.configurePass("Forward", material, mesh, { shaderParams: {
     MainTex_ST: [1, 1, 0, 0], Transparency: 1, AlphaClipThreshold: 0.5,
-  } }, { ControlMap1: new THREE.Texture() }), null);
+  } }, { ControlMap1: new THREE.Texture() }), undefined);
   assert.equal(material.alphaTest, 0);
   material.alphaTest = 0.5;
-  assert.equal(pass.createPass("Outline", material), null);
+  assert.equal(pass.configurePass("Outline", material), undefined);
   assert.equal(material.alphaTest, 0);
   pass.destroy();
   material.dispose();

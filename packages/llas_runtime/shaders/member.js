@@ -83,8 +83,8 @@ export default class LlasMemberRuntime {
     return this.cheekSupport;
   }
 
-  createPass(passId, material, mesh, materialPass, resolvedTextures = {}) {
-    if (passId !== "Main" && passId !== "Outline") return null;
+  configurePass(passId, material, mesh, materialPass, resolvedTextures = {}) {
+    if (passId !== "Main" && passId !== "Outline") return;
     const color = mesh.geometry?.getAttribute("_shader_color");
     if (!color || color.itemSize !== 4) {
       throw new Error(`LLAS ${mesh.name || "mesh"}: _SHADER_COLOR must be RGBA for AS/Member ${passId}`);
@@ -136,15 +136,19 @@ export default class LlasMemberRuntime {
       // ownership. Stable uniform objects also survive repeated takeovers.
       const baseCacheKey = material.customProgramCacheKey.bind(material);
       material.customProgramCacheKey = () => `${baseCacheKey()}${this.externalCheek ? ":external-cheek" : ""}`;
-      return material;
+      return;
     }
     this.hasOutline = true;
+  }
+
+  createPassObjects(passId, material, mesh) {
+    if (passId !== "Outline") return [];
     const clone = mesh.clone();
     clone.name = `${mesh.name || "mesh"}_Outline`;
     clone.material = material;
     if (mesh.parent) mesh.parent.add(clone);
     this.outlineMesh = clone;
-    return clone;
+    return [clone];
   }
 
   onBeforeRender(renderer) {

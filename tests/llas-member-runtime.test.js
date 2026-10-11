@@ -30,7 +30,7 @@ test("portrait runtime rejects live-only Emissive instead of supplying a guessed
   const material = new THREE.MeshStandardMaterial();
   const runtime = new LlasMemberRuntime(THREE, null, material, mesh);
 
-  assert.throws(() => runtime.createPass("Main", material, mesh, {
+  assert.throws(() => runtime.configurePass("Main", material, mesh, {
     extras: { keywords: ["_EMISSIVE_ON"] },
   }), /_EMISSIVE_ON.*does not implement/);
   assert.equal(runtime.getUniforms().uBeat, undefined);

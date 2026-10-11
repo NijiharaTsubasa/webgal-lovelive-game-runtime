@@ -26,13 +26,12 @@ export default class CharacterEyeRuntime {
     return this.uniforms;
   }
 
-  createPass(passId, material) {
+  configurePass(passId, material) {
     if (passId === "Forward") {
       // GLES3 e001 clips MainTex * MainColor against AlphaClipThreshold.
       // glTF MASK must not run its independent alphaTest first.
       material.alphaTest = 0;
     }
-    return null;
   }
 
   onBeforeRender(renderer, scene) {

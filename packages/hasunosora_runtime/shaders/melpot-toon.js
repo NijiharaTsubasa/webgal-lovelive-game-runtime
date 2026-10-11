@@ -49,11 +49,10 @@ export default class MelpotToonRuntime {
     return this.uniforms;
   }
 
-  createPass(passId, material) {
+  configurePass(passId, material) {
     // glTF MASK clips the base-color texture before MELPOT's injected body.
     // The compiled Forward and Outline programs instead clip ControlMap1.
     material.alphaTest = 0;
-    return null;
   }
 
   // 每帧渲染前执行：从场景中寻找主平行光与环境光并同步到 uniform 中
@@ -157,20 +156,24 @@ export class MelpotOutlineRuntime {
     this.outlineMesh = null;
   }
 
-  createPass(passId, material) {
-    if (passId !== "Outline") return null;
+  configurePass(passId, material) {
+    if (passId !== "Outline") return;
     material.alphaMap = null;
     material.normalMap = null;
     material.roughnessMap = null;
     material.metalnessMap = null;
     material.emissiveMap = null;
     material.aoMap = null;
+  }
+
+  createPassObjects(passId, material) {
+    if (passId !== "Outline") return [];
     const outlineMesh = this.mesh.clone();
     outlineMesh.name = (this.mesh.name || "mesh") + "_outline";
     outlineMesh.material = material;
     if (this.mesh.parent) this.mesh.parent.add(outlineMesh);
     this.outlineMesh = outlineMesh;
-    return outlineMesh;
+    return [outlineMesh];
   }
 
   onBeforeRender() {
