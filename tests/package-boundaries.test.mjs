@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const packagesRoot = fileURLToPath(new URL('../packages/', import.meta.url));
 const expected = {
   hasunosora_runtime: ['shader', 'behavior', 'garupa-expression-adapter'],
-  garupa_runtime: ['behavior'],
+  garupa_runtime: ['behavior', 'shader', 'render-profile', 'garupa-expression-adapter'],
   llas_runtime: ['shader', 'behavior', 'garupa-expression-adapter'],
   'yohane_runtime': ['garupa-expression-adapter', 'render-profile', 'shader'],
 };

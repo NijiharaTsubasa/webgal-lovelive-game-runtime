@@ -6,6 +6,570 @@
       "name": "AvatarScaler",
       "script": "behaviors/avatar-scaler.js",
       "executionOrder": 0
+    },
+    {
+      "type": "garupa-expression-adapter",
+      "name": "garupa-live2d-face",
+      "motionGroup": "garupa",
+      "script": "adapters/garupa-live2d-face.js"
+    },
+    {
+      "type": "shader",
+      "name": "garupa-meteor",
+      "src": "shaders/meteor.glsl",
+      "script": "shaders/meteor-runtime.js",
+      "samplers": [
+        {
+          "name": "_MainTex_with_sampler_MainTex",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_MatCapMap_with_sampler_MatCapMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_NormalMap_with_sampler_NormalMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_OutlineZOffsetMask_with_sampler_OutlineZOffsetMask",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_ShadingControlMap_with_sampler_ShadingControlMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_ShadowMap_with_sampler_ShadowMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "passes": [
+        {
+          "id": "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_388808a20e68_PRELUDE",
+              "METEOR_VERTEX_581ec7040e51_PRELUDE",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE",
+              "METEOR_VERTEX_cb89461843f8_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_388808a20e68_BODY",
+              "METEOR_VERTEX_581ec7040e51_BODY",
+              "METEOR_VERTEX_58c90c6af71c_BODY",
+              "METEOR_VERTEX_cb89461843f8_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_0383a87ba4f5_PRELUDE",
+              "METEOR_FRAGMENT_072aed3878ef_PRELUDE",
+              "METEOR_FRAGMENT_135198361706_PRELUDE",
+              "METEOR_FRAGMENT_1c06d55eedda_PRELUDE",
+              "METEOR_FRAGMENT_1cd9c45379c9_PRELUDE",
+              "METEOR_FRAGMENT_321caf7aaab6_PRELUDE",
+              "METEOR_FRAGMENT_39e8719e09c3_PRELUDE",
+              "METEOR_FRAGMENT_3e6800df64bb_PRELUDE",
+              "METEOR_FRAGMENT_3f7e0e60ce3c_PRELUDE",
+              "METEOR_FRAGMENT_487dd51c8563_PRELUDE",
+              "METEOR_FRAGMENT_6ba50ab4eb1a_PRELUDE",
+              "METEOR_FRAGMENT_86ac80591123_PRELUDE",
+              "METEOR_FRAGMENT_93db25cf96e8_PRELUDE",
+              "METEOR_FRAGMENT_97b4fde7f21b_PRELUDE",
+              "METEOR_FRAGMENT_a7c057dabe2d_PRELUDE",
+              "METEOR_FRAGMENT_a938a970a557_PRELUDE",
+              "METEOR_FRAGMENT_b0a743f8f190_PRELUDE",
+              "METEOR_FRAGMENT_b5a740ffffcb_PRELUDE",
+              "METEOR_FRAGMENT_b9f1b4b9274e_PRELUDE",
+              "METEOR_FRAGMENT_be3397708357_PRELUDE",
+              "METEOR_FRAGMENT_cae60ca4fd15_PRELUDE",
+              "METEOR_FRAGMENT_d5069419d91a_PRELUDE",
+              "METEOR_FRAGMENT_d81c51d3ee01_PRELUDE",
+              "METEOR_FRAGMENT_e0c5b2111616_PRELUDE",
+              "METEOR_FRAGMENT_e416213f5844_PRELUDE",
+              "METEOR_FRAGMENT_e64465345840_PRELUDE",
+              "METEOR_FRAGMENT_ffcceb842644_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_0383a87ba4f5_BODY",
+              "METEOR_FRAGMENT_072aed3878ef_BODY",
+              "METEOR_FRAGMENT_135198361706_BODY",
+              "METEOR_FRAGMENT_1c06d55eedda_BODY",
+              "METEOR_FRAGMENT_1cd9c45379c9_BODY",
+              "METEOR_FRAGMENT_321caf7aaab6_BODY",
+              "METEOR_FRAGMENT_39e8719e09c3_BODY",
+              "METEOR_FRAGMENT_3e6800df64bb_BODY",
+              "METEOR_FRAGMENT_3f7e0e60ce3c_BODY",
+              "METEOR_FRAGMENT_487dd51c8563_BODY",
+              "METEOR_FRAGMENT_6ba50ab4eb1a_BODY",
+              "METEOR_FRAGMENT_86ac80591123_BODY",
+              "METEOR_FRAGMENT_93db25cf96e8_BODY",
+              "METEOR_FRAGMENT_97b4fde7f21b_BODY",
+              "METEOR_FRAGMENT_a7c057dabe2d_BODY",
+              "METEOR_FRAGMENT_a938a970a557_BODY",
+              "METEOR_FRAGMENT_b0a743f8f190_BODY",
+              "METEOR_FRAGMENT_b5a740ffffcb_BODY",
+              "METEOR_FRAGMENT_b9f1b4b9274e_BODY",
+              "METEOR_FRAGMENT_be3397708357_BODY",
+              "METEOR_FRAGMENT_cae60ca4fd15_BODY",
+              "METEOR_FRAGMENT_d5069419d91a_BODY",
+              "METEOR_FRAGMENT_d81c51d3ee01_BODY",
+              "METEOR_FRAGMENT_e0c5b2111616_BODY",
+              "METEOR_FRAGMENT_e416213f5844_BODY",
+              "METEOR_FRAGMENT_e64465345840_BODY",
+              "METEOR_FRAGMENT_ffcceb842644_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_136178e1441e_PRELUDE",
+              "METEOR_VERTEX_59035f93e743_PRELUDE",
+              "METEOR_VERTEX_7daed3a7a413_PRELUDE",
+              "METEOR_VERTEX_b3a95655f0a4_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_136178e1441e_BODY",
+              "METEOR_VERTEX_59035f93e743_BODY",
+              "METEOR_VERTEX_7daed3a7a413_BODY",
+              "METEOR_VERTEX_b3a95655f0a4_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_7afbe243df68_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_7afbe243df68_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShader::subshader-0::pass-2::DepthOnly::DepthOnly",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_b3a95655f0a4_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_b3a95655f0a4_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_8aae369aac1e_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_8aae369aac1e_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "garupa-meteor-offset",
+      "src": "shaders/meteor.glsl",
+      "script": "shaders/meteor-runtime.js",
+      "samplers": [
+        {
+          "name": "_MainTex_with_sampler_MainTex",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_ShadowMap_with_sampler_ShadowMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "passes": [
+        {
+          "id": "Meteor/MeteorShaderOffset::subshader-0::pass-0::ForwardLit::SRPDEFAULTUNLIT",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_58c90c6af71c_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_0618aaabd345_PRELUDE",
+              "METEOR_FRAGMENT_6cbd9a0a6bd0_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_0618aaabd345_BODY",
+              "METEOR_FRAGMENT_6cbd9a0a6bd0_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderOffset::subshader-0::pass-1::Offset::UniversalForward",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_c6742bea8c23_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_c6742bea8c23_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_2d99c767f48d_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_2d99c767f48d_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderOffset::subshader-0::pass-2::AlphaWriteOffBase::AlphaWriteOffBase",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_58c90c6af71c_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_0618aaabd345_PRELUDE",
+              "METEOR_FRAGMENT_6cbd9a0a6bd0_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_0618aaabd345_BODY",
+              "METEOR_FRAGMENT_6cbd9a0a6bd0_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderOffset::subshader-0::pass-3::AlphaWriteOffOffset::AlphaWriteOffOffset",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_c6742bea8c23_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_c6742bea8c23_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_2d99c767f48d_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_2d99c767f48d_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "shader",
+      "name": "garupa-meteor-transparent",
+      "src": "shaders/meteor.glsl",
+      "script": "shaders/meteor-runtime.js",
+      "samplers": [
+        {
+          "name": "_MainTex_with_sampler_MainTex",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_MatCapMap_with_sampler_MatCapMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_NormalMap_with_sampler_NormalMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_ShadingControlMap_with_sampler_ShadingControlMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "name": "_ShadowMap_with_sampler_ShadowMap",
+          "type": "sampler2D",
+          "missing": {
+            "behavior": "constant",
+            "value": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "passes": [
+        {
+          "id": "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_388808a20e68_PRELUDE",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE",
+              "METEOR_VERTEX_cb89461843f8_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_388808a20e68_BODY",
+              "METEOR_VERTEX_58c90c6af71c_BODY",
+              "METEOR_VERTEX_cb89461843f8_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_4f56924766c4_PRELUDE",
+              "METEOR_FRAGMENT_7677de972223_PRELUDE",
+              "METEOR_FRAGMENT_76be870d4d26_PRELUDE",
+              "METEOR_FRAGMENT_8a9de52d6738_PRELUDE",
+              "METEOR_FRAGMENT_9520386fdd59_PRELUDE",
+              "METEOR_FRAGMENT_9960e59e6df4_PRELUDE",
+              "METEOR_FRAGMENT_ad6f68744280_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_4f56924766c4_BODY",
+              "METEOR_FRAGMENT_7677de972223_BODY",
+              "METEOR_FRAGMENT_76be870d4d26_BODY",
+              "METEOR_FRAGMENT_8a9de52d6738_BODY",
+              "METEOR_FRAGMENT_9520386fdd59_BODY",
+              "METEOR_FRAGMENT_9960e59e6df4_BODY",
+              "METEOR_FRAGMENT_ad6f68744280_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_388808a20e68_PRELUDE",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE",
+              "METEOR_VERTEX_cb89461843f8_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_388808a20e68_BODY",
+              "METEOR_VERTEX_58c90c6af71c_BODY",
+              "METEOR_VERTEX_cb89461843f8_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_37d9b70a33d3_PRELUDE",
+              "METEOR_FRAGMENT_406fa828044e_PRELUDE",
+              "METEOR_FRAGMENT_594d62e5a168_PRELUDE",
+              "METEOR_FRAGMENT_5fa28601af20_PRELUDE",
+              "METEOR_FRAGMENT_a52d4f70d946_PRELUDE",
+              "METEOR_FRAGMENT_b127f2f9093d_PRELUDE",
+              "METEOR_FRAGMENT_ba999ac3916f_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_37d9b70a33d3_BODY",
+              "METEOR_FRAGMENT_406fa828044e_BODY",
+              "METEOR_FRAGMENT_594d62e5a168_BODY",
+              "METEOR_FRAGMENT_5fa28601af20_BODY",
+              "METEOR_FRAGMENT_a52d4f70d946_BODY",
+              "METEOR_FRAGMENT_b127f2f9093d_BODY",
+              "METEOR_FRAGMENT_ba999ac3916f_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderTransparent::subshader-0::pass-2::DepthOnly::DepthOnly",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_58c90c6af71c_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_8aae369aac1e_PRELUDE",
+              "METEOR_FRAGMENT_e54ac41737f8_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_8aae369aac1e_BODY",
+              "METEOR_FRAGMENT_e54ac41737f8_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        },
+        {
+          "id": "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+          "sections": {
+            "vertexPrelude": [
+              "METEOR_VERTEX_COMMON",
+              "METEOR_VERTEX_388808a20e68_PRELUDE",
+              "METEOR_VERTEX_58c90c6af71c_PRELUDE",
+              "METEOR_VERTEX_cb89461843f8_PRELUDE"
+            ],
+            "vertexProject": [
+              "METEOR_VERTEX_388808a20e68_BODY",
+              "METEOR_VERTEX_58c90c6af71c_BODY",
+              "METEOR_VERTEX_cb89461843f8_BODY"
+            ],
+            "fragmentPrelude": [
+              "METEOR_FRAGMENT_COMMON",
+              "METEOR_FRAGMENT_4f56924766c4_PRELUDE",
+              "METEOR_FRAGMENT_7677de972223_PRELUDE",
+              "METEOR_FRAGMENT_76be870d4d26_PRELUDE",
+              "METEOR_FRAGMENT_8a9de52d6738_PRELUDE",
+              "METEOR_FRAGMENT_9520386fdd59_PRELUDE",
+              "METEOR_FRAGMENT_9960e59e6df4_PRELUDE",
+              "METEOR_FRAGMENT_ad6f68744280_PRELUDE"
+            ],
+            "fragmentBody": [
+              "METEOR_FRAGMENT_BEGIN",
+              "METEOR_FRAGMENT_4f56924766c4_BODY",
+              "METEOR_FRAGMENT_7677de972223_BODY",
+              "METEOR_FRAGMENT_76be870d4d26_BODY",
+              "METEOR_FRAGMENT_8a9de52d6738_BODY",
+              "METEOR_FRAGMENT_9520386fdd59_BODY",
+              "METEOR_FRAGMENT_9960e59e6df4_BODY",
+              "METEOR_FRAGMENT_ad6f68744280_BODY",
+              "METEOR_FRAGMENT_END"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "render-profile",
+      "name": "garupa-menu",
+      "script": "render-profiles/garupa-menu.js",
+      "requiredShaders": [
+        "garupa-meteor",
+        "garupa-meteor-offset",
+        "garupa-meteor-transparent"
+      ]
     }
   ]
 }

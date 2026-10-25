@@ -10,6 +10,7 @@
 | [幻日夜羽参数表情](yohane-face.md) | 脸部 Morph、独立眼口与眉毛区域及参数映射 |
 | [莲之空辅助骨](hasunosora-sub-bone.md) | 来源局部坐标桥、有序 Swing/Twist/Move 规则及动画生命周期 |
 | [Garupa 体型接口](garupa-avatar-scaler.md) | 头部体型配置、身体节点绑定和原坐标系到归一化骨架的投影 |
+| [Garupa 参数表情](garupa-face.md) | 原子 Morph 目标、参数映射、眼部节点与表情生命周期 |
 | [Shader 数据接口](shader-data.md) | glTF 材质与顶点数据、LLAS 私有关键字及包内脸红控制 |
 
 宿主调用 JS 的通用接口见渲染器仓库的 [Behavior 标准](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer/blob/main/docs/model_behavior_spec.md)、[参数化渲染标准](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer/blob/main/docs/parameterized_rendering_spec.md)和[参数动作与表情标准](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer/blob/main/docs/parameter_driven_animation_spec.md)。本文只补充它们留给游戏包解释的数据。

@@ -1,0 +1,674 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { meteorVariantRows } from '../packages/garupa_runtime/shaders/meteor-variant-data.js';
+import { selectMeteorVariant, selectMeteorProgramCandidate } from '../packages/garupa_runtime/shaders/meteor-variants.js';
+
+// Literal fixtures transcribed from authoritative variant_fallback_resolution.json.
+// Expected native identities are independent of the lookup implementation.
+const nativeFallbacks = [
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    3,
+    80,
+    "b5a740ffffcb8a64d96827406d473942a305ca99ca7d8f3682b7febbfe6abf5e"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    3,
+    12,
+    "cb89461843f889862c8813efded9298a738e1d42760aff92db4438d115068319"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    11,
+    76,
+    "b0a743f8f1900f8e78d5a1f505affc9620e5f71a35e5a955566fa00135bc1e7a"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    11,
+    8,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    13,
+    99,
+    "6ba50ab4eb1a78c6d4010291aef90df95ab65514fabe3be44146dec43e3ef5d2"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    13,
+    31,
+    "388808a20e68ecab151a79393a50f089e549dd2e0beae755a62b47b394a778f4"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    14,
+    86,
+    "d5069419d91a74049fa4a901222a142c32923ba5c4c8fcf8a20dcb7380314a5b"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    14,
+    18,
+    "cb89461843f889862c8813efded9298a738e1d42760aff92db4438d115068319"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    15,
+    73,
+    "072aed3878efc353205c32a8705d18caf2ac38a42c60603fc319d090b9c79821"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    15,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    20,
+    91,
+    "39e8719e09c30f52720d86aca4c23f1740c2668a5890ce62f845eb445a0e188d"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    20,
+    23,
+    "cb89461843f889862c8813efded9298a738e1d42760aff92db4438d115068319"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    26,
+    77,
+    "321caf7aaab6fb2da8690fcbfbe75d9ba120e2cb11e0f1ac038018058dc3f2a4"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    26,
+    9,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    27,
+    71,
+    "135198361706ade969a9ea6d2becff0b3699f9d76ce330c901ca0f695cfd42d1"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    27,
+    3,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    29,
+    73,
+    "072aed3878efc353205c32a8705d18caf2ac38a42c60603fc319d090b9c79821"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    29,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "fragment",
+    31,
+    112,
+    "7afbe243df68210e8fbe9236506c27fba51520a6d4a026dcaa099a8f0212a828"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "vertex",
+    31,
+    107,
+    "7daed3a7a4132b187216b8c9b886e8d803960ad6b3d2451a16db46fd7a05a452"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    35,
+    84,
+    "3e6800df64bbf8802749b9e4ce25026c072bb8b7605203e7a1c45a8f2c01a07d"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    35,
+    16,
+    "cb89461843f889862c8813efded9298a738e1d42760aff92db4438d115068319"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    43,
+    80,
+    "b5a740ffffcb8a64d96827406d473942a305ca99ca7d8f3682b7febbfe6abf5e"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    43,
+    12,
+    "cb89461843f889862c8813efded9298a738e1d42760aff92db4438d115068319"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "fragment",
+    45,
+    111,
+    "7afbe243df68210e8fbe9236506c27fba51520a6d4a026dcaa099a8f0212a828"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "vertex",
+    45,
+    106,
+    "b3a95655f0a4b73356316c5ec2d43f49295cbdc22bbce3d2362213aa266484f1"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    49,
+    79,
+    "86ac80591123de30a81aa1a5bb7785f277586557f61af0a69458f19e61daa2d3"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    49,
+    11,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "fragment",
+    53,
+    112,
+    "7afbe243df68210e8fbe9236506c27fba51520a6d4a026dcaa099a8f0212a828"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-1::Outline::OutlineExtension",
+    "vertex",
+    53,
+    107,
+    "7daed3a7a4132b187216b8c9b886e8d803960ad6b3d2451a16db46fd7a05a452"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    59,
+    71,
+    "135198361706ade969a9ea6d2becff0b3699f9d76ce330c901ca0f695cfd42d1"
+  ],
+  [
+    "Meteor/MeteorShader",
+    "Meteor/MeteorShader::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    59,
+    3,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    1,
+    32,
+    "76be870d4d2653dbeba94b1d1935d7a29c153caf24a48ec357a0448ab5be1fb1"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    1,
+    10,
+    "388808a20e68ecab151a79393a50f089e549dd2e0beae755a62b47b394a778f4"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    1,
+    43,
+    "b127f2f9093d127c1775d24ddc565e03533af6a27cd53662f8aa1c7ddb4419f2"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    1,
+    10,
+    "388808a20e68ecab151a79393a50f089e549dd2e0beae755a62b47b394a778f4"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    1,
+    32,
+    "76be870d4d2653dbeba94b1d1935d7a29c153caf24a48ec357a0448ab5be1fb1"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    1,
+    10,
+    "388808a20e68ecab151a79393a50f089e549dd2e0beae755a62b47b394a778f4"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    2,
+    28,
+    "9520386fdd5904c46ed422fa2c2ac30007b0632e3b12d8e32c4096255484fab6"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    2,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    2,
+    39,
+    "5fa28601af2016511fdb5876795bfe857c9dbc95e61e73b77aae9c8713c89181"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    2,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    2,
+    28,
+    "9520386fdd5904c46ed422fa2c2ac30007b0632e3b12d8e32c4096255484fab6"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    2,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    3,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    3,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    3,
+    38,
+    "ba999ac3916f2751b0f918b1c56f6f587209ce79e8935c2382b59acae04b6bf7"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    3,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    3,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    3,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    5,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    5,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    5,
+    38,
+    "ba999ac3916f2751b0f918b1c56f6f587209ce79e8935c2382b59acae04b6bf7"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    5,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    5,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    5,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    7,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    7,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    7,
+    38,
+    "ba999ac3916f2751b0f918b1c56f6f587209ce79e8935c2382b59acae04b6bf7"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    7,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    7,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    7,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    10,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    10,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    10,
+    38,
+    "ba999ac3916f2751b0f918b1c56f6f587209ce79e8935c2382b59acae04b6bf7"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    10,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    10,
+    27,
+    "8a9de52d6738f411ed0ac0402da4388b4eb9b184524c9657bd33e6934f88d916"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    10,
+    5,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "fragment",
+    11,
+    28,
+    "9520386fdd5904c46ed422fa2c2ac30007b0632e3b12d8e32c4096255484fab6"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-0::ForwardLit::UniversalForward",
+    "vertex",
+    11,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "fragment",
+    11,
+    39,
+    "5fa28601af2016511fdb5876795bfe857c9dbc95e61e73b77aae9c8713c89181"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-1::Accumulate::Accumulate",
+    "vertex",
+    11,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "fragment",
+    11,
+    28,
+    "9520386fdd5904c46ed422fa2c2ac30007b0632e3b12d8e32c4096255484fab6"
+  ],
+  [
+    "Meteor/MeteorShaderTransparent",
+    "Meteor/MeteorShaderTransparent::subshader-0::pass-3::AlphaOnly::AlphaOnly",
+    "vertex",
+    11,
+    6,
+    "58c90c6af71c1652bc867c7c34fa0b296c97379a1815435c6a6a8e503036b537"
+  ]
+];
+
+function request(row, globalKeywords) {
+  return {shader: row.shader, pass: row.stable_key, stage: row.stage,
+    materialKeywords: row.observed_material_keywords, globalKeywords};
+}
+
+test('all 472 retained Meteor projections resolve each retained global candidate', () => {
+  assert.equal(meteorVariantRows.length, 472);
+  // Original offline 480-row evidence filtered by the three retained families;
+  // fingerprints every keyword, global universe, candidate and fallback field.
+  assert.equal(createHash('sha256').update(JSON.stringify(meteorVariantRows)).digest('hex'),
+    'df144cebf282d567d2db599e9e22c127cb751028a3b753f3010a0e8ce27e3fad');
+  const counts = Object.fromEntries([...new Set(meteorVariantRows.map(r => r.shader))]
+    .map(shader => [shader, meteorVariantRows.filter(r => r.shader === shader).length]));
+  assert.deepEqual(counts, {'Meteor/MeteorShader':360, 'Meteor/MeteorShaderOffset':16,
+    'Meteor/MeteorShaderTransparent':96});
+  assert.equal(new Set(meteorVariantRows.map(r => r.stable_key)).size, 11);
+  for (const row of meteorVariantRows) {
+    assert.ok(row.matching_programs.length);
+    for (const program of row.matching_programs) {
+      const selected = selectMeteorVariant(request(row, program.non_material_keywords));
+      assert.equal(selected.source_sha256, program.source_sha256);
+      assert.equal(selected.program_slot, program.program_slot);
+      assert.deepEqual(selected.full_compiled_keywords, program.full_compiled_keywords);
+    }
+  }
+});
+
+test('all 74 native fallback source identities are preserved', () => {
+  assert.equal(nativeFallbacks.length, 74);
+  for (const [shader, pass, stage, combo, slot, hash] of nativeFallbacks) {
+    const row = meteorVariantRows.find(r => r.shader === shader && r.stable_key === pass &&
+      r.stage === stage && r.material_combo_index === combo);
+    assert.ok(row);
+    const selected = selectMeteorVariant(request(row, []));
+    assert.equal(selected.program_slot, slot);
+    assert.equal(selected.source_sha256, hash);
+  }
+});
+
+test('removed URP/Lit variant requests never select a retained Meteor program', () => {
+  for (const stage of ['vertex', 'fragment']) for (const pass of ['ForwardLit', 'Universal Render Pipeline/Lit::subshader-0::pass-0::ForwardLit::UniversalForward']) {
+    assert.throws(() => selectMeteorVariant({ shader: 'Universal Render Pipeline/Lit', pass, stage,
+      materialKeywords: [], globalKeywords: ['EVALUATE_SH_VERTEX', '_LIGHT_COOKIES'] }), /Unobserved or ambiguous/);
+  }
+  assert.ok(meteorVariantRows.every(row => row.shader !== 'Universal Render Pipeline/Lit'));
+});
+
+test('unobserved combinations and invalid inputs never fall back to a first program', () => {
+  const row = meteorVariantRows[0];
+  assert.throws(() => selectMeteorVariant({...request(row, []), materialKeywords:
+    [...row.observed_material_keywords, '_UNOBSERVED']}), /Unobserved/);
+  for (const changes of [{shader: 'missing'}, {pass: 'missing'}, {stage: 'geometry'}]) {
+    assert.throws(() => selectMeteorVariant({...request(row, []), ...changes}), /Unobserved/);
+  }
+  assert.throws(() => selectMeteorVariant({...request(row, []), materialKeywords: null}), /explicit array/);
+  assert.throws(() => selectMeteorVariant(request(row, undefined)), /explicit array/);
+  assert.equal(selectMeteorVariant({...request(row, []),
+    materialKeywords: [...row.observed_material_keywords].reverse()}).source_sha256,
+    'cae60ca4fd15fa3c1ce4c3286741c455554d8a74a2bff068be642f493e06ad2c');
+});
+
+test('single candidates still validate global conditions and ambiguity is fatal', () => {
+  const program = {source_sha256: 'fixture', non_material_keywords: ['REQUIRED']};
+  assert.equal(selectMeteorProgramCandidate([program], ['REQUIRED'], ['REQUIRED']), program);
+  assert.throws(() => selectMeteorProgramCandidate([program], [], ['REQUIRED']), /selects 0/);
+  assert.throws(() => selectMeteorProgramCandidate(
+    [{non_material_keywords: []}], ['ENABLED'], ['ENABLED']), /selects 0/);
+  assert.throws(() => selectMeteorProgramCandidate(
+    [program, {...program, source_sha256: 'another'}], ['REQUIRED'], ['REQUIRED']), /selects 2/);
+});
+

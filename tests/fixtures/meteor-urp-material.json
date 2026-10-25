@@ -1,0 +1,237 @@
+{
+  "purpose": "Original URP Material binding for an explicitly synthetic Primitive GPU test; not a canonical character render.",
+  "material": {
+    "name": "chu2_body_Mask",
+    "extras": {
+      "shader": "garupa-urp-lit",
+      "shaderParams": {
+        "_BaseColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "_BaseMap_ST": [
+          1.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        "_Metallic": 0.0,
+        "_Smoothness": 0.0,
+        "_Surface": 1.0
+      },
+      "renderState": {
+        "renderQueue": 3000
+      },
+      "passes": [
+        {
+          "id": "Universal Render Pipeline/Lit::subshader-0::pass-0::ForwardLit::UniversalForward",
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 0,
+            "alphaToMask": 0,
+            "colorMask": 15,
+            "offset": {
+              "factor": 0.0,
+              "units": 0.0
+            },
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 10,
+              "srcAlpha": 1,
+              "dstAlpha": 0,
+              "opRgb": 0,
+              "opAlpha": 0
+            },
+            "stencil": {
+              "ref": 0,
+              "readMask": 255,
+              "writeMask": 255,
+              "comp": 8,
+              "pass": 0,
+              "fail": 0,
+              "zFail": 0
+            }
+          },
+          "extras": {
+            "lightMode": "UniversalForward",
+            "materialKeywords": [
+              "_ALPHAPREMULTIPLY_ON",
+              "_SURFACE_TYPE_TRANSPARENT"
+            ]
+          }
+        },
+        {
+          "id": "Universal Render Pipeline/Lit::subshader-0::pass-1::DepthOnly::DepthOnly",
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "alphaToMask": 0,
+            "colorMask": 8,
+            "offset": {
+              "factor": 0.0,
+              "units": 0.0
+            },
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0,
+              "opRgb": 0,
+              "opAlpha": 0
+            },
+            "stencil": {
+              "ref": 0,
+              "readMask": 255,
+              "writeMask": 255,
+              "comp": 8,
+              "pass": 0,
+              "fail": 0,
+              "zFail": 0
+            }
+          },
+          "extras": {
+            "lightMode": "DepthOnly",
+            "materialKeywords": [
+              "_ALPHAPREMULTIPLY_ON",
+              "_SURFACE_TYPE_TRANSPARENT"
+            ]
+          }
+        },
+        {
+          "id": "Universal Render Pipeline/Lit::subshader-0::pass-2::DepthNormals::DepthNormals",
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 1,
+            "alphaToMask": 0,
+            "colorMask": 15,
+            "offset": {
+              "factor": 0.0,
+              "units": 0.0
+            },
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 0,
+              "srcAlpha": 1,
+              "dstAlpha": 0,
+              "opRgb": 0,
+              "opAlpha": 0
+            },
+            "stencil": {
+              "ref": 0,
+              "readMask": 255,
+              "writeMask": 255,
+              "comp": 8,
+              "pass": 0,
+              "fail": 0,
+              "zFail": 0
+            }
+          },
+          "extras": {
+            "lightMode": "DepthNormals",
+            "materialKeywords": [
+              "_ALPHAPREMULTIPLY_ON",
+              "_SURFACE_TYPE_TRANSPARENT"
+            ]
+          }
+        },
+        {
+          "id": "Universal Render Pipeline/Lit::subshader-0::pass-3::Universal2D::Universal2D",
+          "renderState": {
+            "cull": 2,
+            "zTest": 4,
+            "zWrite": 0,
+            "alphaToMask": 0,
+            "colorMask": 15,
+            "offset": {
+              "factor": 0.0,
+              "units": 0.0
+            },
+            "blend": {
+              "srcRgb": 1,
+              "dstRgb": 10,
+              "srcAlpha": 1,
+              "dstAlpha": 10,
+              "opRgb": 0,
+              "opAlpha": 0
+            },
+            "stencil": {
+              "ref": 0,
+              "readMask": 255,
+              "writeMask": 255,
+              "comp": 8,
+              "pass": 0,
+              "fail": 0,
+              "zFail": 0
+            }
+          },
+          "extras": {
+            "lightMode": "Universal2D",
+            "materialKeywords": [
+              "_ALPHAPREMULTIPLY_ON",
+              "_SURFACE_TYPE_TRANSPARENT"
+            ]
+          }
+        }
+      ],
+      "textures": {}
+    }
+  },
+  "providedPasses": [
+    {
+      "id": "Universal Render Pipeline/Lit::subshader-0::pass-0::ForwardLit::UniversalForward",
+      "sections": {
+        "vertexPrelude": "METEOR_VERTEX_PRELUDE",
+        "vertexProject": "METEOR_VERTEX_PROJECT",
+        "fragmentPrelude": "METEOR_FRAGMENT_PRELUDE",
+        "fragmentBody": "METEOR_FRAGMENT_BODY"
+      }
+    },
+    {
+      "id": "Universal Render Pipeline/Lit::subshader-0::pass-1::DepthOnly::DepthOnly",
+      "sections": {
+        "vertexPrelude": "METEOR_VERTEX_PRELUDE",
+        "vertexProject": "METEOR_VERTEX_PROJECT",
+        "fragmentPrelude": "METEOR_FRAGMENT_PRELUDE",
+        "fragmentBody": "METEOR_FRAGMENT_BODY"
+      }
+    },
+    {
+      "id": "Universal Render Pipeline/Lit::subshader-0::pass-2::DepthNormals::DepthNormals",
+      "sections": {
+        "vertexPrelude": "METEOR_VERTEX_PRELUDE",
+        "vertexProject": "METEOR_VERTEX_PROJECT",
+        "fragmentPrelude": "METEOR_FRAGMENT_PRELUDE",
+        "fragmentBody": "METEOR_FRAGMENT_BODY"
+      }
+    },
+    {
+      "id": "Universal Render Pipeline/Lit::subshader-0::pass-3::Universal2D::Universal2D",
+      "sections": {
+        "vertexPrelude": "METEOR_VERTEX_PRELUDE",
+        "vertexProject": "METEOR_VERTEX_PROJECT",
+        "fragmentPrelude": "METEOR_FRAGMENT_PRELUDE",
+        "fragmentBody": "METEOR_FRAGMENT_BODY"
+      }
+    }
+  ],
+  "samplers": [
+    {
+      "name": "_BaseMap_with_sampler_BaseMap",
+      "type": "sampler2D",
+      "missing": {
+        "behavior": "constant",
+        "value": [
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  ]
+}
