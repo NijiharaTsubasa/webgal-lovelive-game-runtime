@@ -1,9 +1,7 @@
-import { Matrix4, Vector3, Vector4 } from 'three';
-
 // normalized_model.py reflects mesh POSITION/NORMAL.x and TANGENT.x/w,
 // and reverses triangle indices. This module reconstructs source attributes
 // before executing retained source math; it does not infer front_facing.
-const reflectX = new Matrix4().makeScale(-1, 1, 1);
+let reflectX;
 
 function matrix(value, label) {
   if (!value?.isMatrix4 || !value.elements.every(Number.isFinite)) throw new TypeError(`${label} must be a finite Matrix4`);
@@ -16,9 +14,9 @@ function inverse(value, label) {
 }
 
 /** Return source-space values from the converter's reflected attributes. */
-export const meteorSourcePosition = value => new Vector3(-value.x, value.y, value.z);
-export const meteorSourceNormal = value => new Vector3(-value.x, value.y, value.z);
-export const meteorSourceTangent = value => new Vector4(-value.x, value.y, value.z, -value.w);
+export const meteorSourcePosition = value => value.clone().set(-value.x, value.y, value.z);
+export const meteorSourceNormal = value => value.clone().set(-value.x, value.y, value.z);
+export const meteorSourceTangent = value => value.clone().set(-value.x, value.y, value.z, -value.w);
 
 /** Conventional GL depth [-w,+w] -> reversed Metal depth [w,0].
  * Only row z changes: z_M = (w_GL-z_GL)/2. Columns remain columns.
@@ -46,17 +44,18 @@ export function meteorCoordinateMatrices({ modelMatrix, objectMatrix = modelMatr
   matrix(modelMatrix, 'modelMatrix');
   matrix(viewMatrix, 'viewMatrix');
   matrix(objectMatrix, 'objectMatrix');
-  const objectToWorld = new Matrix4().multiplyMatrices(reflectX, objectMatrix).multiply(reflectX);
+  reflectX ??= modelMatrix.clone().makeScale(-1, 1, 1);
+  const objectToWorld = modelMatrix.clone().multiplyMatrices(reflectX, objectMatrix).multiply(reflectX);
   const worldToObject = inverse(objectToWorld, 'objectMatrix');
-  const view = new Matrix4().multiplyMatrices(viewMatrix, reflectX);
+  const view = modelMatrix.clone().multiplyMatrices(viewMatrix, reflectX);
   const inverseView = inverse(view, 'viewMatrix');
   const projection = meteorMetalProjection(projectionMatrix);
   return {
     objectToWorld, worldToObject, view, inverseView, projection,
     // Native SMR shader object frame is RootBone, while Three skinned values
     // remain mesh-local. U * bridge = Sx * meshWorld (positions and directions).
-    meshToSource: new Matrix4().multiplyMatrices(reflectX, inverse(objectMatrix, 'objectMatrix')).multiply(modelMatrix),
-    viewProjection: new Matrix4().multiplyMatrices(projection, view),
+    meshToSource: modelMatrix.clone().multiplyMatrices(reflectX, inverse(objectMatrix, 'objectMatrix')).multiply(modelMatrix),
+    viewProjection: modelMatrix.clone().multiplyMatrices(projection, view),
     // Four source Outline VS read only unity_CameraProjection[1].y.
     // The other entries of that separate Unity matrix are not reconstructed.
     cameraProjectionY: projectionMatrix.elements[5],
@@ -76,7 +75,7 @@ export function meteorOrthoReadFields({ orthographic, halfHeight }) {
 
 /** Apply only AFTER the complete source VS, including its Outline z override. */
 export function meteorMetalClipToGL(sourceClip) {
-  return new Vector4(sourceClip.x, sourceClip.y, sourceClip.w - 2 * sourceClip.z, sourceClip.w);
+  return sourceClip.clone().set(sourceClip.x, sourceClip.y, sourceClip.w - 2 * sourceClip.z, sourceClip.w);
 }
 
 function targetHeight(height) {
@@ -90,7 +89,7 @@ function targetHeight(height) {
  */
 export function meteorMetalFragCoord(glFragCoord, height) {
   targetHeight(height);
-  return new Vector4(glFragCoord.x, height - glFragCoord.y, 1 - glFragCoord.z, glFragCoord.w);
+  return glFragCoord.clone().set(glFragCoord.x, height - glFragCoord.y, 1 - glFragCoord.z, glFragCoord.w);
 }
 
 /** The hlslcc_FragCoord AFTER the source MSL entry's explicit 1/position.w. */

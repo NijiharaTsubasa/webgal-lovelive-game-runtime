@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { Euler, Matrix3, Matrix4, OrthographicCamera, PerspectiveCamera, Quaternion, Vector3, Vector4 } from 'three';
 import {
   meteorSourcePosition, meteorSourceNormal, meteorSourceTangent,
@@ -14,6 +15,13 @@ function close(actual, expected, label = '') {
   assert.equal(a.length, b.length);
   a.forEach((x, i) => assert.ok(Math.abs(x - b[i]) <= 2e-11 * Math.max(1, Math.abs(x), Math.abs(b[i])), `${label}[${i}]: ${x} vs ${b[i]}`));
 }
+
+test('coordinate helpers load as raw runtime modules without a package-name resolver', async () => {
+  const source=await readFile(new URL('../packages/garupa_runtime/shaders/meteor-coordinates.js',import.meta.url),'utf8');
+  const raw=await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
+  const args={modelMatrix:new Matrix4(),viewMatrix:new Matrix4(),projectionMatrix:new Matrix4()};
+  close(raw.meteorCoordinateMatrices(args).meshToSource,meteorCoordinateMatrices(args).meshToSource);
+});
 
 function cameras() {
   const perspective = new PerspectiveCamera(47.3, 1.731, .137, 231.5);
