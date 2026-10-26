@@ -129,7 +129,7 @@ Shader使用原UV通道 `_source_uv0`／`_source_uv1`；不要再套一次材质
 
 `shaderParams` 的颜色数值保留原传给Shader的语义；普通颜色的RGB按原规则转为线性，alpha与普通向量不随意转换。JSON标量按目标uniform声明绑定 `float`、`int` 或 `uint`，整数不能当成任意浮点近似。
 
-纹理通过标准 `texture.extras.colorSpace`、`rawMipChain` 和 `anisotropy` 保存采样语义。`rawMipChain`用于 `sampler2D`，直接引用GLB中的原像素及连续缩小级，支持RGBA8／RGBA16F和逐级无损deflate存储；加载后直接上传，并使用提供的mip链。MatCap保留原显式选中的级及对应偏移。各向异性等级来自源设置，设备不支持所需等级时应报错，不能静默降低。修改纹理处理时须保留像素格式、颜色空间、原mip和采样状态。
+纹理使用GLB中的PNG图像，通过标准 `texture.extras.colorSpace` 和 `anisotropy` 声明颜色空间及各向异性过滤等级，寻址和缩放过滤由glTF sampler提供。MatCap将原显式选中的级保存为单级图像，并保留对应的LOD偏移。设备不支持所需各向异性等级时应报错，不能静默降低。修改纹理处理时须保留颜色空间、MatCap选定图像及其LOD对应关系和采样参数。
 
 ### 6.5 修改时的配套检查
 
