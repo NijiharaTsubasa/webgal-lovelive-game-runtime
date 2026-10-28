@@ -8,9 +8,9 @@ function matrix(value, label) {
   return value;
 }
 
-function inverse(value, label) {
+function inverse(value, label, target) {
   if (value.determinant() === 0) throw new RangeError(`${label} must be invertible`);
-  return value.clone().invert();
+  return target.copy(value).invert();
 }
 
 /** Return source-space values from the converter's reflected attributes. */
@@ -21,14 +21,26 @@ export const meteorSourceTangent = value => value.clone().set(-value.x, value.y,
 /** Conventional GL depth [-w,+w] -> reversed Metal depth [w,0].
  * Only row z changes: z_M = (w_GL-z_GL)/2. Columns remain columns.
  */
-export function meteorMetalProjection(glProjection) {
-  const result = matrix(glProjection, 'glProjection').clone();
+export function meteorMetalProjection(glProjection, target) {
+  matrix(glProjection, 'glProjection');
+  const result = target ? target.copy(glProjection) : glProjection.clone();
   const source = glProjection.elements;
   for (let column = 0; column < 4; column++) {
     const base = column * 4;
     result.elements[base + 2] = .5 * (source[base + 3] - source[base + 2]);
   }
   return result;
+}
+
+/** Each runtime owns one result and updates its matrices in place. */
+export function createMeteorCoordinateMatrices(matrixTemplate) {
+  matrix(matrixTemplate, 'matrixTemplate');
+  return {
+    objectToWorld: matrixTemplate.clone(), worldToObject: matrixTemplate.clone(),
+    view: matrixTemplate.clone(), inverseView: matrixTemplate.clone(),
+    projection: matrixTemplate.clone(), meshToSource: matrixTemplate.clone(),
+    viewProjection: matrixTemplate.clone(), cameraProjectionY: 0,
+  };
 }
 
 /** Source uniforms and post-skin input bridge, in reflected source world.
@@ -39,27 +51,28 @@ export function meteorMetalProjection(glProjection) {
  * Callers supply the current matrices after skin/object/camera updates.
  * These are mathematical basis changes, not a source float-instruction emulator.
  * Source array-of-float4 bindings must upload these Matrix4 columns unchanged.
+ * Pass a runtime-owned target to reuse matrix storage between draws.
  */
-export function meteorCoordinateMatrices({ modelMatrix, objectMatrix = modelMatrix, viewMatrix, projectionMatrix }) {
+export function meteorCoordinateMatrices({ modelMatrix, objectMatrix = modelMatrix, viewMatrix, projectionMatrix }, target) {
   matrix(modelMatrix, 'modelMatrix');
   matrix(viewMatrix, 'viewMatrix');
   matrix(objectMatrix, 'objectMatrix');
   reflectX ??= modelMatrix.clone().makeScale(-1, 1, 1);
-  const objectToWorld = modelMatrix.clone().multiplyMatrices(reflectX, objectMatrix).multiply(reflectX);
-  const worldToObject = inverse(objectToWorld, 'objectMatrix');
-  const view = modelMatrix.clone().multiplyMatrices(viewMatrix, reflectX);
-  const inverseView = inverse(view, 'viewMatrix');
-  const projection = meteorMetalProjection(projectionMatrix);
-  return {
-    objectToWorld, worldToObject, view, inverseView, projection,
-    // Native SMR shader object frame is RootBone, while Three skinned values
-    // remain mesh-local. U * bridge = Sx * meshWorld (positions and directions).
-    meshToSource: modelMatrix.clone().multiplyMatrices(reflectX, inverse(objectMatrix, 'objectMatrix')).multiply(modelMatrix),
-    viewProjection: modelMatrix.clone().multiplyMatrices(projection, view),
-    // Four source Outline VS read only unity_CameraProjection[1].y.
-    // The other entries of that separate Unity matrix are not reconstructed.
-    cameraProjectionY: projectionMatrix.elements[5],
-  };
+  const result = target ?? createMeteorCoordinateMatrices(modelMatrix);
+  result.objectToWorld.multiplyMatrices(reflectX, objectMatrix).multiply(reflectX);
+  inverse(result.objectToWorld, 'objectMatrix', result.worldToObject);
+  result.view.multiplyMatrices(viewMatrix, reflectX);
+  inverse(result.view, 'viewMatrix', result.inverseView);
+  meteorMetalProjection(projectionMatrix, result.projection);
+  // Native SMR shader object frame is RootBone, while Three skinned values
+  // remain mesh-local. U * bridge = Sx * meshWorld (positions and directions).
+  inverse(objectMatrix, 'objectMatrix', result.meshToSource);
+  result.meshToSource.premultiply(reflectX).multiply(modelMatrix);
+  result.viewProjection.multiplyMatrices(result.projection, result.view);
+  // Four source Outline VS read only unity_CameraProjection[1].y.
+  // The other entries of that separate Unity matrix are not reconstructed.
+  result.cameraProjectionY = projectionMatrix.elements[5];
+  return result;
 }
 
 /** Only the source OrthoParams.y/w fields actually read by retained programs.

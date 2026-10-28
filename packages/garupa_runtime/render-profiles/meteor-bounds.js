@@ -49,19 +49,13 @@ export function createMeteorBounds(THREE, metadata, anchors) {
   const root = resolve(metadata.root, 'root');
   const rootWorldLabel = `root world (${label})`;
   const bones = metadata.bones.map((bone, index) => {
-    if (bone.empty !== undefined && typeof bone.empty !== 'boolean') {
-      throw new Error(`meteor bounds: invalid bone ${index} empty flag`);
-    }
-    // Original (+Infinity min, -Infinity max) is an empty-box sentinel.
-    // Keep this array entry/index and anchor; it contributes no bounds.
     const binding = resolve(bone, `bone ${index}`);
-    return bone.empty === true ? { ...binding, empty: true } : {
-      ...binding, empty: false,
+    return {
+      ...binding,
       center: vector(bone.center, `bone ${index} center`),
       extents: vector(bone.extents, `bone ${index} extents`, true),
     };
   });
-  if (!bones.some(bone => !bone.empty)) throw new Error('meteor bounds: no nonempty source bone boxes');
   const savedCenter = vector(metadata.localBounds?.center, 'localBounds center');
   const savedExtents = vector(metadata.localBounds?.extents, 'localBounds extents', true);
   const rootWorld = new THREE.Matrix4();
@@ -100,7 +94,6 @@ export function createMeteorBounds(THREE, metadata, anchors) {
         rootInverse.copy(rootWorld).invert();
         reset();
         for (const bone of bones) {
-          if (bone.empty) continue;
           validateMatrix(bone.anchor.matrixWorld, bone.validationLabel);
           boneWorld.multiplyMatrices(bone.anchor.matrixWorld, bone.localMatrix).multiply(bone.bind);
           validateMatrix(boneWorld, bone.validationLabel);

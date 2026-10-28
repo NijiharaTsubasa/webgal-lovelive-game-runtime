@@ -125,7 +125,11 @@ OIT把指定透明对象集中绘制到公共附件，再统一合成。它需�
 
 模型保留原 `meteorLayer`、`meteorBounds`、`meteorBoundsAnchor` 等节点数据。动态边界来自原Renderer的骨骼包围盒，既用于视锥剔除，也用于排序；源RootBone同时决定Shader对象空间，不应替换成glTF Mesh节点的世界矩阵。头身组合后，配置包通过标准 `parts.nodeBindings` 找到源节点的等价实际节点，不能用同名骨骼猜对应关系。人物整体位移应在本帧准备绘制前完成。
 
+`meteorBounds.bones` 按源顺序保存参与包围盒并集的非空骨盒，每项包含节点绑定、`bindMatrix`、`center` 和 `extents`，列表必须非空。`meteorBounds.root` 独立保存源RootBone绑定；骨盒通过各自节点绑定定位，列表位置只表示处理顺序。
+
 Shader使用原UV通道 `_source_uv0`／`_source_uv1`；不要再套一次材质UV变换。原缺失通道的取值由已确认的输入语义处理，例如缺失切线使用原默认值，并在蒙皮后的源输入位置注入，不通过重新生成几何切线替代。面部方向与非均匀缩放也有独立适配；相关坐标变换集中在 `meteor-coordinates.js` 和菜单配置中，修改后的测试应覆盖头身组合、动作、边界与整体位移。
+
+每个材质runtime独立持有坐标矩阵缓冲，绘制时根据当前对象、RootBone和相机矩阵原位更新。菜单附加灯的默认输入逐帧在已有uniform缓冲中清零，再应用 `meteorFrame.uniforms` 的显式覆盖；修改缓存时须保留这一更新顺序与实例隔离。
 
 `shaderParams` 的颜色数值保留原传给Shader的语义；普通颜色的RGB按原规则转为线性，alpha与普通向量不随意转换。JSON标量按目标uniform声明绑定 `float`、`int` 或 `uint`，整数不能当成任意浮点近似。
 

@@ -83,6 +83,36 @@ function frame(overrides = {}) {
     ambientRGB: [.137, .239, .371], ...overrides };
 }
 
+test('zero light inputs reset after explicit overrides while preserving per-instance uniform storage', () => {
+  const a = fixture(), b = fixture();
+  const names = ['u_UnityPerDraw_unity_LightIndices', ...new Set(Object.values(meteorProgramData)
+    .flatMap(program => program.globals.filter(global => global.scope === 'AdditionalLights').map(global => global.name)))];
+  const values = value => Array.isArray(value) ? value.map(values)
+    : value?.toArray ? value.toArray() : ArrayBuffer.isView(value) ? Array.from(value) : value;
+  const nonzero = value => Array.isArray(value) ? value.map(nonzero) : .371;
+  const zeros = value => Array.isArray(value) ? value.map(zeros) : 0;
+  const overrides = Object.fromEntries(names.map(name => [name, nonzero(values(a.runtime.uniforms[name].value))]));
+  const snapshot = structuredClone(overrides);
+  const storage = names.map(name => a.runtime.uniforms[name].value);
+  try {
+    a.runtime.setFrame(frame({ uniforms: overrides }));
+    b.runtime.setFrame(frame({ uniforms: overrides }));
+    a.runtime.setFrame(frame());
+    names.forEach((name, index) => {
+      assert.equal(a.runtime.uniforms[name].value, storage[index], `${name}: storage identity`);
+      assert.deepEqual(values(a.runtime.uniforms[name].value), zeros(overrides[name]), `${name}: default restored`);
+      assert.deepEqual(values(b.runtime.uniforms[name].value), overrides[name], `${name}: other instance unchanged`);
+      assert.ok(a.runtime.available.has(name), `${name}: still provided`);
+    });
+    assert.deepEqual(overrides, snapshot, 'source frame arrays are untouched');
+    a.runtime.setFrame(frame({ uniforms: overrides }));
+    for (const name of names) assert.deepEqual(values(a.runtime.uniforms[name].value), overrides[name]);
+    assert.throws(() => a.runtime.setFrame(frame({ additionalLights: [{}] })), /Additional light rigs require explicit/);
+  } finally {
+    for (const f of [a, b]) { f.runtime.destroy(); f.mesh.geometry.dispose(); f.material.dispose(); }
+  }
+});
+
 test('generated package exposes all56 programs as named preludes/bodies with unchanged common sections', async () => {
   const source = await readFile(new URL('../packages/garupa_runtime/shaders/meteor.glsl', import.meta.url), 'utf8');
   const sections = Object.fromEntries([...source.matchAll(/\/\/ @section (\S+)\r?\n([\s\S]*?)\r?\n\/\/ @end/g)].map(([, name, body]) => [name, body]));
@@ -167,6 +197,8 @@ test('frame and matrix updates reuse compiled uniform objects and preserve sourc
   const lightValue = light.value;
   const columns = uniforms.u_UnityPerDraw_hlslcc_mtx4x4unity_ObjectToWorld.value;
   const column = columns[3];
+  const coordinateBuffers = f.runtime.coordinateMatrices;
+  const objectToWorld = coordinateBuffers.objectToWorld;
   const camera = new THREE.PerspectiveCamera(43, 1.7, .13, 173);
   camera.position.set(1.93, 2.71, 5.37);
   f.mesh.position.set(.371, -.239, 1.193);
@@ -174,6 +206,7 @@ test('frame and matrix updates reuse compiled uniform objects and preserve sourc
   f.runtime.onBeforeRender(null, null, camera);
   assert.deepEqual(lightValue.toArray(), [-1.371, -.239, 3.719, 0]);
   assert.deepEqual(column.toArray(), [-.371, -.239, 1.193, 1]);
+  f.mesh.position.x += .137;
   f.runtime.setFrame(frame({ mainLightPosition: [.17, .31, -.73, 0], targetHeight: 719 }));
   f.runtime.onBeforeRender(null, null, camera);
   assert.equal(f.runtime.getUniforms(f.id), uniforms);
@@ -181,6 +214,10 @@ test('frame and matrix updates reuse compiled uniform objects and preserve sourc
   assert.equal(light.value, lightValue);
   assert.equal(uniforms.u_UnityPerDraw_hlslcc_mtx4x4unity_ObjectToWorld.value, columns);
   assert.equal(columns[3], column);
+  assert.equal(f.runtime.coordinateMatrices, coordinateBuffers);
+  assert.equal(coordinateBuffers.objectToWorld, objectToWorld);
+  assert.equal(objectToWorld.elements[12], -f.mesh.position.x);
+  assert.deepEqual(column.toArray(), [-f.mesh.position.x, -.239, 1.193, 1]);
   assert.deepEqual(lightValue.toArray(), [-.17, .31, -.73, 0]);
   assert.equal(uniforms.uMeteorTargetHeight.value, 719);
   assert.equal(uniforms.u_UnityPerDraw_unity_LightData, undefined, 'removed URP-only global is not allocated');

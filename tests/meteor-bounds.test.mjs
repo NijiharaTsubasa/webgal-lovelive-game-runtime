@@ -8,6 +8,13 @@ const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/meteor-bounds-nat
 const tolerance = 2e-6; // model units, includes original float32/native-vs-JS TRS rounding.
 const identity = () => new THREE.Matrix4().toArray();
 const clone = value => structuredClone(value);
+// Native evidence retains the original array, including empty sentinels.
+// The exported contract contains only contributing boxes, in source order.
+function exportedMetadata(row) {
+  const metadata = clone(row.metadata);
+  metadata.bones = metadata.bones.filter(bone => bone.empty !== true);
+  return metadata;
+}
 function anchorsFor(row) {
   return new Map(Object.entries(row.anchors).map(([key, matrix]) => [key, {
     node: { matrixWorld: new THREE.Matrix4().fromArray(matrix) }, localMatrix: new THREE.Matrix4(),
@@ -33,7 +40,7 @@ test('source bone boxes reproduce selected native135 reads within explicit numer
   assert.equal(fixture.cases.length, 9);
   let maximumError = 0;
   for (const row of fixture.cases) {
-    const result = createMeteorBounds(THREE, row.metadata, anchorsFor(row)).update();
+    const result = createMeteorBounds(THREE, exportedMetadata(row), anchorsFor(row)).update();
     closeVector(result.center, row.expected.center, `${row.role}/${row.name}/${row.pose} center`);
     closeVector(result.extents, row.expected.extents, `${row.role}/${row.name}/${row.pose} extents`);
     for (const key of ['center', 'extents']) result[key].toArray().forEach((value, axis) => {
@@ -56,7 +63,7 @@ test('bind compensation composes node world * local binding * bindMatrix for roo
   }
   row.metadata.root.bindMatrix = compensation.toArray();
   for (const bone of row.metadata.bones) bone.bindMatrix = compensation.toArray();
-  const result = createMeteorBounds(THREE, row.metadata, anchors).update();
+  const result = createMeteorBounds(THREE, exportedMetadata(row), anchors).update();
   closeVector(result.center, row.expected.center, 'compensated center');
   closeVector(result.extents, row.expected.extents, 'compensated extents');
 });
@@ -118,7 +125,7 @@ test('current singular or nonfinite anchor matrices fail instead of returning a 
 });
 
 
-test('native infinity sentinel is explicit empty:true, keeps source indices, and contributes no zero box', () => {
+test('exported nonempty boxes reproduce native infinity-sentinel cases without empty-only bindings', () => {
   assert.equal(fixture.emptyBoxProvenance.nativeRows, 15);
   assert.equal(fixture.emptyBoxProvenance.graphicsDeviceType, 'Null');
   assert.deepEqual(fixture.emptyBoxProvenance.source.boxes[0].minBits, ['7f800000', '7f800000', '7f800000']);
@@ -130,18 +137,24 @@ test('native infinity sentinel is explicit empty:true, keeps source indices, and
     assert.ok(!('center' in bones[0]) && !('extents' in bones[0]));
     assert.deepEqual(bones.map(b => b.sourceIndex), [0, 1, 2, 3]);
     assert.deepEqual(bones.map(b => b.sourceBoneName), ['Neck', 'Head', 'UTeeth', 'LTeeth']);
+    const metadata = exportedMetadata(row);
+    assert.deepEqual(metadata.bones.map(bone => bone.node), bones.slice(1).map(bone => bone.node));
+    assert.deepEqual(metadata.bones, bones.slice(1));
     const anchors = anchorsFor(row);
-    const result = createMeteorBounds(THREE, row.metadata, anchors).update();
+    const provider = createMeteorBounds(THREE, metadata, anchors);
+    const result = provider.update();
     closeVector(result.center, row.expected.center, `${row.pose} empty center`);
     closeVector(result.extents, row.expected.extents, `${row.pose} empty extents`);
     for (const key of ['center', 'extents']) result[key].toArray().forEach((value, axis) => {
       maximumError = Math.max(maximumError, Math.abs(value - row.expected[key][axis]));
     });
-    // An explicit empty entry never becomes a fabricated zero-size point.
-    const before = result.center.clone();
+    const before = result.center.clone(), beforeExtents = result.extents.clone();
     anchors.get(bones[0].node).node.matrixWorld.makeTranslation(100, 200, 300);
-    const after = createMeteorBounds(THREE, row.metadata, anchors).update();
-    closeVector(after.center, before.toArray(), 'empty-only anchor does not contribute');
+    closeVector(provider.update().center, before.toArray(), 'empty-only anchor does not contribute');
+    anchors.delete(bones[0].node);
+    const after = createMeteorBounds(THREE, metadata, anchors).update();
+    closeVector(after.center, before.toArray(), 'empty-only anchor is not required');
+    closeVector(after.extents, beforeExtents.toArray(), 'extents without empty-only anchor');
   }
   const baseline = fixture.emptyBoxCases.find(r => r.pose === 'baseline');
   const held = fixture.emptyBoxCases.find(r => r.pose === 'empty_root_translation_weighted_world_fixed');
@@ -160,7 +173,7 @@ test('firstN source boxes retain their original bone indices when renderer has a
     assert.equal(row.metadata.bones.length, row.sourceBoxCount);
     assert.deepEqual(row.metadata.bones.map(b => b.sourceIndex),
       Array.from({ length: row.sourceBoxCount }, (_, i) => i));
-    const result = createMeteorBounds(THREE, row.metadata, anchorsFor(row)).update();
+    const result = createMeteorBounds(THREE, exportedMetadata(row), anchorsFor(row)).update();
     closeVector(result.center, row.expected.center, `${row.name}/${row.pose} firstN center`);
     closeVector(result.extents, row.expected.extents, `${row.name}/${row.pose} firstN extents`);
     for (const key of ['center', 'extents']) result[key].toArray().forEach((value, axis) => {
@@ -170,12 +183,14 @@ test('firstN source boxes retain their original bone indices when renderer has a
   console.log(`meteor bounds:6 trailing-bone native cases maximum absolute error=${maximumError}; limit=${tolerance}`);
 });
 
-test('malformed empty flag or all-empty bounds cannot silently become a fallback zero box', () => {
+test('bone boxes require a populated list and geometric bounds', () => {
   const { metadata, anchors } = simple();
-  metadata.bones[0] = { node: 'bone', bindMatrix: identity(), empty: true };
-  assert.throws(() => createMeteorBounds(THREE, metadata, anchors), /no nonempty source bone boxes/);
-  metadata.bones[0].empty = 'true';
-  assert.throws(() => createMeteorBounds(THREE, metadata, anchors), /invalid bone 0 empty flag/);
+  metadata.bones = [];
+  assert.throws(() => createMeteorBounds(THREE, metadata, anchors), /no source bone boxes/);
+  metadata.bones = [{ node: 'bone', bindMatrix: identity() }];
+  assert.throws(() => createMeteorBounds(THREE, metadata, anchors), /invalid bone 0 center/);
+  metadata.bones[0].center = [0, 0, 0];
+  assert.throws(() => createMeteorBounds(THREE, metadata, anchors), /invalid bone 0 extents/);
 });
 
 
@@ -186,7 +201,7 @@ test('sourceObjectMatrix reuses the compensated native root frame, independent o
   const compensation = new THREE.Matrix4().makeRotationX(.31).setPosition(.21, -.13, .07);
   anchors.get(row.metadata.root.node).node.matrixWorld.multiply(compensation.clone().invert());
   anchors.get(row.metadata.root.node).localMatrix.copy(compensation);
-  const provider = createMeteorBounds(THREE, row.metadata, anchors);
+  const provider = createMeteorBounds(THREE, exportedMetadata(row), anchors);
   const first = provider.update(), matrix = first.sourceObjectMatrix;
   assert.ok(matrix?.isMatrix4);
   matrix.elements.forEach((value, index) => assert.ok(Math.abs(value - expected.elements[index]) < 1e-12));
@@ -205,7 +220,7 @@ test('sourceObjectMatrix reuses the compensated native root frame, independent o
 
 test('sourceObjectMatrix matches actual native root readbacks in the empty and trailing fixtures', () => {
   for (const row of [...fixture.emptyBoxCases, ...fixture.trailingBoneCases]) {
-    const provider = createMeteorBounds(THREE, row.metadata, anchorsFor(row));
+    const provider = createMeteorBounds(THREE, exportedMetadata(row), anchorsFor(row));
     const result = provider.update();
     const expectedNativeRoot = row.anchors[row.metadata.root.node];
     result.sourceObjectMatrix.elements.forEach((value, index) =>

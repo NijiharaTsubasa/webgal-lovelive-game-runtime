@@ -1,6 +1,6 @@
 import { meteorProgramData } from './meteor-program-data.js';
 import { selectMeteorVariant } from './meteor-variants.js';
-import { meteorCoordinateMatrices } from './meteor-coordinates.js';
+import { createMeteorCoordinateMatrices, meteorCoordinateMatrices } from './meteor-coordinates.js';
 import { prepareMeteorSections, selectMeteorSections } from './meteor-sections.js';
 
 const families = {
@@ -10,6 +10,8 @@ const families = {
 };
 const sourceGlobalTextures = new Set(Object.values(meteorProgramData).flatMap(p => p.globalTextures.map(t => t.uniform)));
 const descriptors = new Map(Object.values(meteorProgramData).flatMap(p => p.globals.map(u => [u.name, u])));
+const zeroFrameNames = ['u_UnityPerDraw_unity_LightIndices',
+  ...[...descriptors].filter(([, descriptor]) => descriptor.scope === 'AdditionalLights').map(([name]) => name)];
 const faceNames = ['_FaceFrontX', '_FaceFrontZ', '_FaceRightX', '_FaceRightZ'];
 const shNames = ['SHAr', 'SHAg', 'SHAb', 'SHBr', 'SHBg', 'SHBb', 'SHC']
   .filter(name => descriptors.has(`u_UnityPerDraw_unity_${name}`));
@@ -43,6 +45,15 @@ function uniformValue(THREE, descriptor) {
   return descriptor.array ? (descriptor.width === 1 ? new Float32Array(descriptor.array) : Array.from({ length: descriptor.array }, scalar)) : scalar();
 }
 
+function resetUniform(uniform) {
+  const value = uniform.value;
+  if (value?.isVector2 || value?.isVector3 || value?.isVector4) value.setScalar(0);
+  else if (Array.isArray(value)) {
+    for (const vector of value) vector.setScalar(0);
+  } else if (value instanceof Float32Array) value.fill(0);
+  else uniform.value = 0;
+}
+
 function keywords(value) {
   if (!Array.isArray(value) || value.some(item => typeof item !== 'string' || !item)) throw new TypeError('globalKeywords must be an explicit string array');
   return [...new Set(value)].sort();
@@ -66,6 +77,7 @@ export default class MeteorRuntime {
     for (const name of sourceGlobalTextures) this.uniforms[name] = { value: null };
     this.uniforms.uMeteorTargetHeight = { value: 0 };
     this.uniforms.uMeteorMeshToSource = { value: new THREE.Matrix4() };
+    this.coordinateMatrices = createMeteorCoordinateMatrices(new THREE.Matrix4());
     this.frontFacingStatus = 'UNVERIFIED';
   }
 
@@ -205,10 +217,9 @@ export default class MeteorRuntime {
     // rigs require explicit source arrays/count/indices rather than guessed URP
     // attenuation or cookie mapping.
     if (frame.additionalLights?.length) throw new Error('Additional light rigs require explicit source frame.uniforms bindings');
-    this.put('u_UnityPerDraw_unity_LightIndices', [[0, 0, 0, 0], [0, 0, 0, 0]]);
-    for (const [name, descriptor] of descriptors) if (descriptor.scope === 'AdditionalLights') {
-      const value = descriptor.array ? Array.from({ length: descriptor.array }, () => Array(descriptor.width).fill(0)) : Array(descriptor.width).fill(0);
-      this.put(name, value);
+    for (const name of zeroFrameNames) {
+      resetUniform(this.uniforms[name]);
+      this.available.add(name);
     }
     if (frame.sh !== undefined) {
       for (const name of shNames) this.put(`u_UnityPerDraw_unity_${name}`, frame.sh[name]);
@@ -234,7 +245,7 @@ export default class MeteorRuntime {
     if (!camera || !this.mesh) throw new Error('Meteor requires an object and camera');
     camera.updateMatrixWorld(true);
     this.mesh.updateWorldMatrix(true, false);
-    const matrices = meteorCoordinateMatrices({ modelMatrix: this.mesh.matrixWorld, objectMatrix: this.frame.objectMatrix, viewMatrix: camera.matrixWorldInverse, projectionMatrix: camera.projectionMatrix });
+    const matrices = meteorCoordinateMatrices({ modelMatrix: this.mesh.matrixWorld, objectMatrix: this.frame.objectMatrix, viewMatrix: camera.matrixWorldInverse, projectionMatrix: camera.projectionMatrix }, this.coordinateMatrices);
     this.uniforms.uMeteorMeshToSource.value.copy(matrices.meshToSource);
     const assignMatrix = (name, matrix) => {
       const columns = this.uniforms[name].value;

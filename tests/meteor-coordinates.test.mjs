@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { Euler, Matrix3, Matrix4, OrthographicCamera, PerspectiveCamera, Quaternion, Vector3, Vector4 } from 'three';
 import {
   meteorSourcePosition, meteorSourceNormal, meteorSourceTangent,
-  meteorMetalProjection, meteorCoordinateMatrices, meteorOrthoReadFields,
+  meteorMetalProjection, createMeteorCoordinateMatrices, meteorCoordinateMatrices, meteorOrthoReadFields,
   meteorMetalClipToGL, meteorMetalFragCoord, meteorHlslFragCoord,
   meteorCoordinateBoundary, meteorCoordinates,
 } from '../packages/garupa_runtime/shaders/meteor-coordinates.js';
@@ -162,4 +162,78 @@ test('native RootBone object frame bridges post-skin mesh inputs without transfo
   close(decoded.clone().applyMatrix4(m.worldToObject), decoded.clone().applyMatrix4(reflection.clone().multiply(root).multiply(reflection).invert()));
   assert.deepEqual(uv, snapshot);
   assert.throws(() => meteorCoordinateMatrices({modelMatrix: mesh, objectMatrix: new Matrix4().makeScale(0,1,1), viewMatrix: camera.matrixWorldInverse, projectionMatrix: camera.projectionMatrix}), /invertible/);
+});
+
+// The allocating expression order is a regression oracle for changing only
+// storage lifetime. The geometric source/GL invariants above remain independent.
+function coordinateReference({ modelMatrix, objectMatrix, viewMatrix, projectionMatrix }) {
+  const reflection = new Matrix4().makeScale(-1, 1, 1);
+  const objectToWorld = modelMatrix.clone().multiplyMatrices(reflection, objectMatrix).multiply(reflection);
+  const view = modelMatrix.clone().multiplyMatrices(viewMatrix, reflection);
+  const projection = meteorMetalProjection(projectionMatrix);
+  return {
+    objectToWorld, worldToObject: objectToWorld.clone().invert(),
+    view, inverseView: view.clone().invert(), projection,
+    meshToSource: modelMatrix.clone().multiplyMatrices(reflection, objectMatrix.clone().invert()).multiply(modelMatrix),
+    viewProjection: modelMatrix.clone().multiplyMatrices(projection, view),
+    cameraProjectionY: projectionMatrix.elements[5],
+  };
+}
+
+test('reused coordinate outputs preserve expression results through moving cameras and nonuniform animated roots', () => {
+  const output = createMeteorCoordinateMatrices(new Matrix4());
+  const references = { ...output };
+  const matrixKeys = Object.keys(output).filter(key => key !== 'cameraProjectionY');
+  const reflection = new Matrix4().makeScale(-1, 1, 1);
+  for (const [cameraIndex, camera] of cameras().entries()) for (const frame of [0, 1, 7, 19, 37]) {
+    const t = frame * .173;
+    camera.position.set(3.71 + t * .21, 2.29 - t * .13, 7.83 + Math.sin(t) * .37);
+    camera.lookAt(-.31 + t * .17, .73, -.47);
+    if (camera.isPerspectiveCamera) camera.fov = 47.3 + t * .73;
+    else camera.zoom = 1.37 + t * .031;
+    camera.updateProjectionMatrix(); camera.updateMatrixWorld(true);
+    const modelMatrix = new Matrix4().compose(new Vector3(.371 + t, -.239, 1.193 - t * .31),
+      new Quaternion().setFromEuler(new Euler(.317 + t * .23, -.571, .193 - t * .17)),
+      new Vector3(frame % 2 ? -1.37 : 1.37, .71 + t * .017, 2.19));
+    const objectMatrix = new Matrix4().compose(new Vector3(-.719, 1.137 + t * .13, .431),
+      new Quaternion().setFromEuler(new Euler(-.239, .731 + t * .19, -.371)),
+      new Vector3(.83, 1.91, .63 + t * .011));
+    const args = { modelMatrix, objectMatrix, viewMatrix: camera.matrixWorldInverse, projectionMatrix: camera.projectionMatrix };
+    const inputsBefore = Object.values(args).map(value => value.toArray());
+    const expected = coordinateReference(args);
+    assert.equal(meteorCoordinateMatrices(args, output), output);
+    for (const key of matrixKeys) {
+      assert.equal(output[key], references[key], `${key} identity stays stable`);
+      assert.deepEqual(output[key].elements, expected[key].elements, `${cameraIndex}/${frame}/${key}`);
+    }
+    assert.equal(output.cameraProjectionY, expected.cameraProjectionY);
+    assert.deepEqual(Object.values(args).map(value => value.toArray()), inputsBefore);
+    const point = new Vector4(.137 + t * .013, -.719, .371, 1);
+    close(point.clone().applyMatrix4(output.meshToSource).applyMatrix4(output.objectToWorld),
+      point.clone().applyMatrix4(modelMatrix).applyMatrix4(reflection), 'source root bridge remains equivalent');
+  }
+});
+
+test('coordinate workspaces isolate instances and allocate no cloned matrices while reused', () => {
+  const a = createMeteorCoordinateMatrices(new Matrix4()), b = createMeteorCoordinateMatrices(new Matrix4());
+  const [cameraA, cameraB] = cameras();
+  const argsA = { modelMatrix: new Matrix4().makeTranslation(.371, -.719, 1.193), viewMatrix: cameraA.matrixWorldInverse, projectionMatrix: cameraA.projectionMatrix };
+  const argsB = { modelMatrix: new Matrix4().makeScale(-1.37, .71, 2.19), viewMatrix: cameraB.matrixWorldInverse, projectionMatrix: cameraB.projectionMatrix };
+  meteorCoordinateMatrices(argsA, a);
+  const savedA = Object.fromEntries(Object.entries(a).map(([key, value]) => [key, value.toArray ? value.toArray() : value]));
+  let clones = 0;
+  const originalClone = Matrix4.prototype.clone;
+  Matrix4.prototype.clone = function () { clones++; return originalClone.call(this); };
+  try {
+    meteorCoordinateMatrices(argsB, b);
+    argsB.modelMatrix.elements[12] = 4.137;
+    meteorCoordinateMatrices(argsB, b);
+    assert.equal(clones, 0);
+  } finally { Matrix4.prototype.clone = originalClone; }
+  for (const [key, value] of Object.entries(a)) {
+    if (value.toArray) { assert.notEqual(value, b[key]); assert.deepEqual(value.toArray(), savedA[key]); }
+    else assert.equal(value, savedA[key]);
+  }
+  const independent = meteorCoordinateMatrices(argsB);
+  assert.notEqual(independent, b); assert.notEqual(independent.meshToSource, b.meshToSource);
 });
