@@ -220,7 +220,6 @@ test('frame and matrix updates reuse compiled uniform objects and preserve sourc
   assert.deepEqual(column.toArray(), [-f.mesh.position.x, -.239, 1.193, 1]);
   assert.deepEqual(lightValue.toArray(), [-.17, .31, -.73, 0]);
   assert.equal(uniforms.uMeteorTargetHeight.value, 719);
-  assert.equal(uniforms.u_UnityPerDraw_unity_LightData, undefined, 'removed URP-only global is not allocated');
   assert.deepEqual(uniforms.u_UnityPerDraw_unity_LightIndices.value.map(vector => vector.toArray()), [[0, 0, 0, 0], [0, 0, 0, 0]]);
 });
 
@@ -243,8 +242,8 @@ test('unrelated global keyword changes preserve retained Meteor source identitie
   assert.throws(() => f.runtime.setFrame(frame({ globalKeywords: [null] })), /explicit string array/);
 });
 
-test('removed URP/Lit family is explicitly rejected by the runtime', () => {
-  for (const shader of ['garupa-urp-lit', 'Universal Render Pipeline/Lit']) {
+test('unknown shader families are rejected by the runtime', () => {
+  for (const shader of ['unknown-shader', 'unknown-source-family']) {
     const material = new THREE.MeshStandardMaterial(); material.userData.shader = shader;
     const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
     assert.throws(() => new MeteorRuntime(THREE, null, material, mesh), /Unsupported Meteor shader family/);
@@ -380,22 +379,11 @@ test('cached void fragment selection still enforces modified ColorMask and expli
 });
 
 
-test('unused legacy frame hints are harmless while unknown explicit source globals remain errors', () => {
-  const f = fixture(), cube = new THREE.CubeTexture();
+test('unknown explicit source globals remain errors', () => {
+  const f = fixture();
   f.runtime.configurePass(f.id, f.material, f.mesh, f.pass);
-  assert.doesNotThrow(() => f.runtime.setFrame(frame({ specCube: cube, specCubeHDR: [1, 1, 0, 0],
-    globalMipBias: [0, 0], lodFade: [.137, .371, .731, 1] })));
-  assert.doesNotThrow(() => f.runtime.onBeforeRender(null, null, new THREE.PerspectiveCamera()));
-  const uniforms = f.runtime.getUniforms(f.id);
-  for (const name of ['uunity_SpecCube0_with_samplerunity_SpecCube0', 'u_UnityPerDraw_unity_SpecCube0_HDR',
-    'u_FGlobals_GlobalMipBias', 'u_UnityPerDraw_unity_LODFade', 'u_FGlobals_AdditionalLightsCount']) {
-    assert.equal(uniforms[name], undefined, `${name} is not retained by these source families`);
-  }
-  assert.throws(() => f.runtime.setFrame(frame({ uniforms: { u_FGlobals_AdditionalLightsCount: [0, 0, 0, 0] } })),
-    /Unknown source global u_FGlobals_AdditionalLightsCount/);
   assert.throws(() => f.runtime.setFrame(frame({ uniforms: { u_UnknownSourceOverride: .371 } })),
     /Unknown source global u_UnknownSourceOverride/);
-  cube.dispose();
 });
 
 

@@ -74,7 +74,7 @@ test('renderer standard ShaderRegistry resolves every configured section and imp
     }
   }
   assert.equal(texts.size, 1, 'all three families use the same generated GLSL resource');
-  await assert.rejects(registry.loadShader('garupa-urp-lit'), /Shader not found: garupa-urp-lit/);
+  await assert.rejects(registry.loadShader('unknown-shader'), /Shader not found: unknown-shader/);
 });
 
 test('renderer standard RenderProfileRegistry resolves garupa-menu with all three required shaders', async () => {

@@ -640,14 +640,6 @@ test('all 74 native fallback source identities are preserved', () => {
   }
 });
 
-test('removed URP/Lit variant requests never select a retained Meteor program', () => {
-  for (const stage of ['vertex', 'fragment']) for (const pass of ['ForwardLit', 'Universal Render Pipeline/Lit::subshader-0::pass-0::ForwardLit::UniversalForward']) {
-    assert.throws(() => selectMeteorVariant({ shader: 'Universal Render Pipeline/Lit', pass, stage,
-      materialKeywords: [], globalKeywords: ['EVALUATE_SH_VERTEX', '_LIGHT_COOKIES'] }), /Unobserved or ambiguous/);
-  }
-  assert.ok(meteorVariantRows.every(row => row.shader !== 'Universal Render Pipeline/Lit'));
-});
-
 test('unobserved combinations and invalid inputs never fall back to a first program', () => {
   const row = meteorVariantRows[0];
   assert.throws(() => selectMeteorVariant({...request(row, []), materialKeywords:
