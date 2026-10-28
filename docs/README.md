@@ -10,6 +10,7 @@
 | [幻日夜羽参数表情](yohane-face.md) | 脸部 Morph、独立眼口与眉毛区域及参数映射 |
 | [莲之空辅助骨](hasunosora-sub-bone.md) | 来源局部坐标桥、有序 Swing/Twist/Move 规则及动画生命周期 |
 | [Garupa 体型接口](garupa-avatar-scaler.md) | 头部体型配置、身体节点绑定和原坐标系到归一化骨架的投影 |
+| [Garupa 变换约束](garupa-transform-constraint.md) | 辅助骨的旋转、位置、父级约束及头身坐标帧映射 |
 | [Garupa 参数表情](garupa-face.md) | 原子 Morph 目标、参数映射、眼部节点与表情生命周期 |
 | [Shader 数据接口](shader-data.md) | glTF 材质与顶点数据、LLAS 私有关键字及包内脸红控制 |
 

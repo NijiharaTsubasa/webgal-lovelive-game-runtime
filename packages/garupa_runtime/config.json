@@ -8,6 +8,13 @@
       "executionOrder": 0
     },
     {
+      "type": "behavior",
+      "namespace": "Garupa",
+      "name": "TransformConstraint",
+      "script": "behaviors/transform-constraint.js",
+      "executionOrder": 1
+    },
+    {
       "type": "garupa-expression-adapter",
       "name": "garupa-live2d-face",
       "motionGroup": "garupa",

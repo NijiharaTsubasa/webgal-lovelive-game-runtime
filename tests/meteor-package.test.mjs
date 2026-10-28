@@ -31,9 +31,10 @@ const expectedSamplers = {
 };
 
 test('Garupa package retains AvatarScaler and registers three source families, 11 stable passes and actual sampler names', () => {
-  assert.deepEqual(config.components.filter(component => component.type === 'behavior'), [{
+  assert.deepEqual(config.components.find(component => component.type === 'behavior'
+    && component.namespace === 'Garupa' && component.name === 'AvatarScaler'), {
     type: 'behavior', namespace: 'Garupa', name: 'AvatarScaler', script: 'behaviors/avatar-scaler.js', executionOrder: 0,
-  }]);
+  });
   const shaders = config.components.filter(component => component.type === 'shader');
   assert.deepEqual(shaders.map(component => component.name), Object.keys(families));
   assert.equal(shaders.reduce((count, shader) => count + shader.passes.length, 0), 11);
