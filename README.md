@@ -19,7 +19,7 @@ Behavior 用于实现模型专属的运行时逻辑（相当于 Unity 的 MonoBe
 | ------ | ------ | ------ | ------ |
 | 《LoveLive! 学园偶像祭 群星闪耀》 | ✅已完成 | ✅表情适配、璃奈板适配 | ✅已完成，含璃奈板 |
 | 《Link! Like! LoveLive!》 | ✅已完成 | ✅模型辅助骨 | ✅已完成，覆盖所有角色 |
-| 《BanG Dream! 少女乐团派对》 | ✅已完成 | ✅AvatarScaler（部分行为为近似还原） | ❌✅已完成（部分面部表情不一致的模型待单点适配） |
+| 《BanG Dream! 少女乐团派对》 | ✅已完成 | ✅AvatarScaler、模型辅助骨 | ✅已完成 |
 | 《幻日夜羽：蜃景努玛梓》 | ✅已完成 | 不涉及 | ✅已完成 |
 
 JS 与渲染器之间的通用接口见 [渲染器仓库的标准文档](https://github.com/NijiharaTsubasa/webgal-lovelive-gltf-renderer) ；各游戏运行时与模型配置、glTF 数据之间的自定义约定见 [游戏运行时数据接口](docs/README.md) 。
