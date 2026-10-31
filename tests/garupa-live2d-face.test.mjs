@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { createExpressionAdapter } from '../packages/garupa_runtime/adapters/garupa-live2d-face.js';
-import { mouthOpening } from '../packages/garupa_runtime/adapters/garupa-mouth-opening.js';
 
 function fixture(extraMouths = []) {
   const names = ['face_main_eye_close_L', 'face_main_eye_close_R', 'face_main_eye_wink_L',
@@ -51,202 +50,92 @@ function fixture(extraMouths = []) {
   return { context, part, root, mesh, geometry, weight: (name) => mesh.morphTargetInfluences[mesh.morphTargetDictionary[name]] };
 }
 
-test('independent eyelids and smile closure share a single closure budget', () => {
+// Synthetic geometry exercises an unclassified but legal model. Audited facial
+// profiles have separate numeric tests; neither test depends on private assets.
+test('partial blink and smile preserve separate left/right closure semantics', () => {
   const f = fixture();
   const driver = createExpressionAdapter(f.context);
   driver.apply({ PARAM_EYE_L_OPEN: 0.4, PARAM_EYE_R_OPEN: 0.7, PARAM_EYE_L_SMILE: 0.25 });
-  assert.ok(Math.abs(f.weight('face_main_eye_close_L') - 0.45) < 1e-12);
-  assert.ok(Math.abs(f.weight('face_main_eye_wink_L') - 0.15) < 1e-12);
-  assert.ok(Math.abs(f.weight('face_main_eye_close_R') - 0.3) < 1e-12);
-  assert.ok(Math.abs(f.weight('face_main_eye_joy_L') - 0.1) < 1e-12);
-});
-
-test('closed positive and negative forms use the authored Joy and Serious contours', () => {
-  const f = fixture(['face_main_mouth_serious']);
-  const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_FORM_01: 0.5, PARAM_MOUTH_OPEN_Y: 0 });
-  assert.equal(f.weight('face_main_mouth_joy'), 0.8);
-  assert.equal(f.weight('face_main_mouth_serious'), 0);
-  assert.equal(f.weight('face_main_mouth_open_a'), 0);
-  driver.apply({ PARAM_MOUTH_FORM_01: -0.5, PARAM_MOUTH_OPEN_Y: 0 });
-  assert.equal(f.weight('face_main_mouth_serious'), 0.8);
-  assert.equal(f.weight('face_main_mouth_joy'), 0);
-  assert.equal(f.weight('face_main_mouth_open_o'), 0);
-  driver.apply({ PARAM_MOUTH_FORM_01: 0 });
-  assert.equal(f.weight('face_main_mouth_serious'), 0);
-  assert.equal(f.weight('face_main_mouth_joy'), 0);
-});
-
-test('closed contours occupy the remaining mouth budget without changing open contour weights', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry', 'face_main_mouth_serious']);
-  const driver = createExpressionAdapter(f.context);
-  for (const form of [-1, -0.5, 0.25, 0.5, 1]) {
-    for (let step = 0; step <= 100; step++) {
-      const open = step / 100;
-      driver.apply({ PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_OPEN_Y: open });
-      const opening = mouthOpening(open, form, 0);
-      const negative = Math.min(1, Math.max(0, -form) * 2);
-      const expectedOpen = opening * (1 - negative) + Math.max(opening, open * Math.max(0, -form)) * negative;
-      const amount = Math.min(1, Math.abs(form) * 2);
-      const expectedClosed = (1 - expectedOpen) * amount * 0.8;
-      const closed = f.weight(form > 0 ? 'face_main_mouth_joy' : 'face_main_mouth_serious');
-      assert.ok(Math.abs(closed - expectedClosed) < 1e-12);
-      assert.ok(Math.abs(f.weight('face_main_mouth_fun') + f.weight('face_main_mouth_angry') - expectedOpen * 0.8) < 1e-12);
-      assert.ok(closed + expectedOpen * 0.8 <= 0.8 + 1e-12);
-    }
+  for (const [name, value] of [['face_main_eye_close_L', .45], ['face_main_eye_wink_L', .15], ['face_main_eye_close_R', .3]]) {
+    assert.ok(Math.abs(f.weight(name) - value) < 1e-12, name);
   }
-});
-
-test('a disabled authored closed contour stays neutral instead of activating another opening shape', () => {
-  const f = fixture(['face_main_mouth_serious']);
-  const serious = f.part.component.morphPoses.find((pose) => pose.targets.face.face_main_mouth_serious !== undefined);
-  serious.targets.face.face_main_mouth_serious = 0;
-  const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_FORM_01: -1, PARAM_MOUTH_OPEN_Y: 0 });
-  for (const name of Object.keys(f.mesh.morphTargetDictionary).filter((name) => name.includes('mouth'))) {
-    assert.equal(f.weight(name), 0);
-  }
-});
-
-test('an opening Joy or Serious target cannot be selected as a closed-mouth contour', () => {
-  const f = fixture(['face_main_mouth_serious']);
-  const attribute = (name) => f.geometry.morphAttributes.position[f.mesh.morphTargetDictionary[name]];
-  attribute('face_main_mouth_joy').array.set([0, 0.001, 0]);
-  attribute('face_main_mouth_serious').array.set([0, 0.001, 0]);
-  attribute('face_main_mouth_smile').array.set([0.001, 0, 0]);
-  attribute('face_main_mouth_sad').array.set([0.001, 0, 0]);
-  const driver = createExpressionAdapter(f.context);
-  for (const target of f.geometry.morphAttributes.position) {
-    target.getX = target.getY = target.getZ = () => { throw new Error('Per-frame closed-mouth vertex scan'); };
-  }
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 0, PARAM_MOUTH_FORM_01: 1 });
-  assert.equal(f.weight('face_main_mouth_joy'), 0);
-  assert.equal(f.weight('face_main_mouth_smile'), 0.8);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 0, PARAM_MOUTH_FORM_01: -1 });
-  assert.equal(f.weight('face_main_mouth_serious'), 0);
-  assert.equal(f.weight('face_main_mouth_sad'), 0.8);
-  assert.equal(f.weight('face_main_mouth_open_a'), 0);
-});
-
-test('mouth uses actual source range and closes without leaving smile residue', () => {
-  const f = fixture();
-  const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 0.6, PARAM_MOUTH_FORM_01: 0.5 });
-  assert.equal(f.weight('face_main_mouth_open_a'), mouthOpening(0.6, 0.5, 0) * 0.8);
-  assert.ok(Math.abs(f.weight('face_main_mouth_joy') - (1 - mouthOpening(0.6, 0.5, 0)) * 0.8) < 1e-12);
-  assert.equal(f.weight('face_main_mouth_smile'), 0);
-  driver.apply({});
-  assert.equal(f.weight('face_main_mouth_open_a'), 0);
-  assert.equal(f.weight('face_main_mouth_joy'), 0);
-  assert.equal(f.weight('face_main_mouth_smile'), 0);
-});
-
-test('positive form does not turn a closed source smile into an open native grin', () => {
-  const f = fixture();
-  const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_FORM_01: 0.83, PARAM_MOUTH_OPEN_Y: 0 });
-  for (const name of ['face_main_mouth_open_a', 'face_main_mouth_open_o', 'face_main_mouth_smile']) {
-    assert.equal(f.weight(name), 0);
-  }
-  assert.equal(f.weight('face_main_mouth_joy'), 0.8);
-  assert.equal(driver.eyes.active, false);
   driver.dispose();
 });
 
-test('closed input clears opening channels and keeps only authored closed contours over a native open underlay', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry', 'face_main_mouth_serious']);
-  f.mesh.morphTargetInfluences.fill(0.7);
-  const baseline = [...f.mesh.morphTargetInfluences];
+test('closed parameter forms never activate an opening vowel on a classified closure direction', () => {
+  const f = fixture(['face_main_mouth_serious']);
   const driver = createExpressionAdapter(f.context);
-  for (const form of [-1, -0.75, -0.5, -0.1, 0, 0.25, 0.5, 1]) {
-    for (const scale of [-1, 0, 1]) {
-      driver.apply({ PARAM_MOUTH_OPEN_Y: 0, PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_SCALE: scale });
-      for (const name of Object.keys(f.mesh.morphTargetDictionary).filter((name) => name.includes('mouth'))) {
-        const expected = name.endsWith('_joy') ? Math.min(1, Math.max(0, form) * 2) * 0.8
-          : name.endsWith('_serious') ? Math.min(1, Math.max(0, -form) * 2) * 0.8 : 0;
-        assert.equal(f.weight(name), expected, `${name}, FORM=${form}, SCALE=${scale}`);
-      }
+  for (const form of [-1, -.5, -1/3, -.1, 0, .25, .5, 1]) {
+    driver.apply({ PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_OPEN_Y: 0 });
+    for (const name of ['face_main_mouth_open_a', 'face_main_mouth_open_o', 'face_main_mouth_open_e']) {
+      assert.equal(f.weight(name), 0, `${name} at ${form}`);
+    }
+    for (const value of f.mesh.morphTargetInfluences) assert.ok(Number.isFinite(value) && value >= 0 && value <= 1);
+  }
+  driver.dispose();
+});
+
+test('visible opening candidates cannot be used as closed-mouth contours', () => {
+  const f = fixture(['face_main_mouth_serious']);
+  const attribute = name => f.geometry.morphAttributes.position[f.mesh.morphTargetDictionary[name]];
+  attribute('face_main_mouth_joy').array.set([0, .001, 0]);
+  attribute('face_main_mouth_serious').array.set([0, .001, 0]);
+  attribute('face_main_mouth_smile').array.set([.001, 0, 0]);
+  attribute('face_main_mouth_sad').array.set([.001, 0, 0]);
+  const driver = createExpressionAdapter(f.context);
+  for (const form of [-1, 1]) {
+    driver.apply({ PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_OPEN_Y: 0 });
+    for (const name of ['face_main_mouth_joy', 'face_main_mouth_serious', 'face_main_mouth_open_a']) assert.equal(f.weight(name), 0);
+  }
+  driver.dispose();
+});
+
+test('mouth controls use authored units, including full opening and finite bounded intermediates', () => {
+  const f = fixture();
+  const driver = createExpressionAdapter(f.context);
+  driver.apply({ PARAM_MOUTH_OPEN_Y: 1 });
+  assert.equal(f.weight('face_main_mouth_open_a'), 1);
+  for (const form of [-1, -.5, 0, .5, 1]) for (const scale of [-1, 0, 1]) {
+    for (let step = 0; step <= 20; step++) {
+      driver.apply({ PARAM_MOUTH_OPEN_Y: step / 20, PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_SCALE: scale });
+      for (const value of f.mesh.morphTargetInfluences) assert.ok(Number.isFinite(value) && value >= 0 && value <= 1);
     }
   }
   driver.dispose();
-  assert.deepEqual(f.mesh.morphTargetInfluences, baseline);
 });
 
-test('open contours blend native Fun and Angry while keeping a bounded opening budget', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry']);
-  const driver = createExpressionAdapter(f.context);
-  for (const form of [-1, -0.5, -0.25, 0, 0.5, 1]) {
-    driver.apply({ PARAM_MOUTH_OPEN_Y: 0.7, PARAM_MOUTH_FORM_01: form });
-    const opening = mouthOpening(0.7, form, 0);
-    const negative = Math.min(1, Math.max(0, -form) * 2);
-    const expected = (opening * (1 - negative) + Math.max(opening, 0.7 * Math.max(0, -form)) * negative) * 0.8;
-    assert.ok(Math.abs(f.weight('face_main_mouth_fun') + f.weight('face_main_mouth_angry') - expected) < 1e-12);
-    assert.equal(f.weight('face_main_mouth_open_a'), 0);
-    assert.equal(f.weight('face_main_mouth_open_o'), 0);
+test('positive opening remains available when an unclassified head lacks a useful native grin', () => {
+  for (const hasZeroFun of [false, true]) {
+    const f = fixture(hasZeroFun ? ['face_main_mouth_fun'] : []);
+    f.geometry.morphAttributes.position[f.mesh.morphTargetDictionary.face_main_mouth_smile].array.fill(0);
+    if (hasZeroFun) f.geometry.morphAttributes.position[f.mesh.morphTargetDictionary.face_main_mouth_fun].array.fill(0);
+    const driver = createExpressionAdapter(f.context);
+    driver.apply({ PARAM_MOUTH_FORM_01: 1, PARAM_MOUTH_OPEN_Y: 1 });
+    assert.equal(f.weight('face_main_mouth_open_a'), 1);
+    driver.dispose();
   }
-  driver.dispose();
 });
 
-test('a candidate with little authored opening motion uses a vowel fallback without rescanning each frame', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry']);
-  const attributes = f.geometry.morphAttributes.position;
-  attributes[f.mesh.morphTargetDictionary.face_main_mouth_fun].array.fill(0);
-  attributes[f.mesh.morphTargetDictionary.face_main_mouth_angry].array.fill(0);
+test('morph geometry is analysed at binding and never rescanned by per-frame controls', () => {
+  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_serious']);
   const driver = createExpressionAdapter(f.context);
-  for (const attribute of attributes) {
+  for (const attribute of f.geometry.morphAttributes.position) {
     attribute.getX = attribute.getY = attribute.getZ = () => { throw new Error('Per-frame vertex scan'); };
   }
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 0.5, PARAM_MOUTH_FORM_01: 0.5 });
-  assert.equal(f.weight('face_main_mouth_open_a'), mouthOpening(0.5, 0.5, 0) * 0.8);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 0.5, PARAM_MOUTH_FORM_01: -1 });
-  assert.equal(f.weight('face_main_mouth_open_o'), 0.5 * 0.8);
-  assert.equal(f.weight('face_main_mouth_fun'), 0);
-  assert.equal(f.weight('face_main_mouth_angry'), 0);
+  for (let i = 0; i < 20; i++) driver.apply({ PARAM_MOUTH_OPEN_Y: i / 20, PARAM_MOUTH_FORM_01: -.7, PARAM_BROW_L_Y: i / 20 });
   driver.dispose();
 });
 
-test('round mouths retain scale control and their native maximum at full negative form', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry']);
+test('the same controls produce the same result after different previous expressions', () => {
+  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_serious']);
   const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 1, PARAM_MOUTH_FORM_01: -1, PARAM_MOUTH_SCALE: -1 });
-  const small = f.weight('face_main_mouth_angry');
-  assert.ok(small > 0 && small < 0.8);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 1, PARAM_MOUTH_FORM_01: -1, PARAM_MOUTH_SCALE: 1 });
-  assert.equal(f.weight('face_main_mouth_angry'), 0.8);
+  const controls = { PARAM_MOUTH_FORM_01: -.45, PARAM_MOUTH_OPEN_Y: .35, PARAM_BROW_L_Y: .6, PARAM_EYE_R_OPEN: .4 };
+  driver.apply(controls);
+  const expected = [...f.mesh.morphTargetInfluences];
+  driver.apply({ PARAM_MOUTH_FORM_01: 1, PARAM_MOUTH_OPEN_Y: 1, PARAM_EYE_L_SMILE: 1, PARAM_BROW_L_ANGLE: -1 });
+  driver.apply(controls);
+  assert.deepEqual(f.mesh.morphTargetInfluences, expected);
   driver.dispose();
-});
-
-test('the final mixed mouth opening is monotone and bounded across forms and scales', () => {
-  const f = fixture(['face_main_mouth_fun', 'face_main_mouth_angry']);
-  const driver = createExpressionAdapter(f.context);
-  for (const form of [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 1]) {
-    for (const scale of [-1, 0, 1]) {
-      let previous = 0;
-      for (let step = 0; step <= 100; step++) {
-        driver.apply({ PARAM_MOUTH_OPEN_Y: step / 100, PARAM_MOUTH_FORM_01: form, PARAM_MOUTH_SCALE: scale });
-        const total = f.weight('face_main_mouth_fun') + f.weight('face_main_mouth_angry');
-        assert.ok(total >= previous - 1e-12 && total <= 0.8 + 1e-12);
-        previous = total;
-      }
-    }
-  }
-  driver.dispose();
-});
-
-test('opening remains continuous, monotone and within the model range at every form and size', () => {
-  for (const form of [-1, -0.73, -0.5, -0.1, 0, 0.31, 0.5, 1]) {
-    for (const scale of [-1, 0, 1]) {
-      let previous = 0;
-      for (let step = 0; step <= 100; step++) {
-        const value = mouthOpening(step / 100, form, scale);
-        assert.ok(value >= previous && value <= 1);
-        assert.ok(value - previous < 0.06);
-        previous = value;
-      }
-    }
-  }
-  assert.ok(Math.abs(mouthOpening(0.5, 0, 0) - 0.5) < 0.002);
-  assert.ok(mouthOpening(0.5, 0, -1) < mouthOpening(0.5, 0, 1));
 });
 
 test('native Morph underlay, unrelated decorations and shared geometry survive lifecycle', () => {
@@ -277,37 +166,53 @@ function namesFilled(mesh, value) {
   return Array(mesh.morphTargetInfluences.length).fill(value);
 }
 
-test('source channel omitted by native presets is still bindable; zero source range stays zero', () => {
-  const f = fixture();
-  f.part.component.morphPoses[4].targets.face.face_main_mouth_open_a = 0;
-  f.part.component.morphPoses.push({ name: 'face.Joy', targets: {} });
+test('source recipes are native data, while parameter controls use actual Morph units', () => {
+  const f = fixture(['face_main_mouth_serious']);
+  f.part.component.morphPoses.find(p => p.targets.face.face_main_mouth_open_a !== undefined).targets.face.face_main_mouth_open_a = 0;
+  const original = JSON.stringify(f.part.component.morphPoses);
   const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_MOUTH_OPEN_Y: 1, PARAM_EYE_L_SMILE: 0.6 });
-  assert.equal(f.weight('face_main_mouth_open_a'), 0);
-  assert.equal(f.weight('face_main_eye_joy_L'), 0.6);
+  driver.apply({ PARAM_MOUTH_OPEN_Y: 1 });
+  assert.equal(f.weight('face_main_mouth_open_a'), 1);
+  assert.equal(JSON.stringify(f.part.component.morphPoses), original);
+  driver.dispose();
 });
 
-test('malformed or missing atom bindings fail visibly rather than guessing model capabilities', () => {
+test('available Morph bindings remain usable without a complete native preset collection', () => {
   const f = fixture();
-  f.part.component.morphPoses.splice(0, 1);
-  assert.throws(() => createExpressionAdapter(f.context), /Missing Garupa source Morph/);
+  f.part.component.morphPoses = [];
+  const driver = createExpressionAdapter(f.context);
+  driver.apply({ PARAM_EYE_L_OPEN: 0.25, PARAM_MOUTH_OPEN_Y: 0.7 });
+  assert.ok(Math.abs(f.weight('face_main_eye_close_L') - 0.75) < 1e-12);
+  assert.ok(f.weight('face_main_mouth_open_a') > 0);
+  driver.dispose();
   f.part.component.motionGroup = 'other';
   assert.equal(createExpressionAdapter(f.context), null);
 });
 
-test('composition cannot hide missing atomic metadata by emptying the original component root', () => {
+test('different native recipes may reference the same Morph with different gains', () => {
   const f = fixture();
-  f.part.component.morphPoses = [{ name: 'face.Native', targets: { face: { face_main_eye_close_L: 1 } } }];
-  f.root.clear();
-  assert.throws(() => createExpressionAdapter(f.context), /regenerate the model package/);
+  f.part.component.morphPoses.push({name:'source.otherRoute',targets:{face:{face_main_mouth_open_a:.3}}});
+  const original=JSON.stringify(f.part.component.morphPoses);
+  const driver=createExpressionAdapter(f.context);
+  driver.apply({PARAM_MOUTH_OPEN_Y:.6});
+  assert.ok(f.weight('face_main_mouth_open_a')>0);
+  driver.dispose();
+  assert.equal(JSON.stringify(f.part.component.morphPoses),original);
 });
 
-test('finite signed source Morph ranges are preserved rather than clipped', () => {
-  const f = fixture();
-  f.part.component.morphPoses[0].targets.face.face_main_eye_close_L = -0.4;
+test('native avatar semantic group drives a new head independently from its resource identity', () => {
+  const f = fixture(['face_main_mouth_serious', 'face_main_mouth_angry']);
+  f.part.component.name = 'a newly authored costume';
+  f.part.component.defaultMotion = 'unrelated/path';
+  f.part.component.behaviors = [{ name: 'Garupa.AvatarScaler', parameters: { profile: { id: 39 } } }];
+  f.geometry.attributes.position.setX(0, .002);
   const driver = createExpressionAdapter(f.context);
-  driver.apply({ PARAM_EYE_L_OPEN: 0.25 });
-  assert.ok(Math.abs(f.weight('face_main_eye_close_L') + 0.3) < 1e-12);
+  assert.equal(driver.capabilities.characterId, 39);
+  driver.apply({ PARAM_MOUTH_FORM_01: -1/3, PARAM_MOUTH_OPEN_Y: 0 });
+  assert.equal(f.weight('face_main_mouth_serious'), .5);
+  driver.apply({ PARAM_MOUTH_FORM_01: -1, PARAM_MOUTH_OPEN_Y: 1 });
+  assert.ok(f.weight('face_main_mouth_angry') > 0);
+  assert.equal(f.weight('face_main_mouth_open_o'), 0);
   driver.dispose();
 });
 

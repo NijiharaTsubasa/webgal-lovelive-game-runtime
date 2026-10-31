@@ -1,15 +1,18 @@
 const SIDES = ['L', 'R'];
 
-// Cross-medium controls are bounded separately from the original model weights.
+// Cross-medium controls and authored Morph weights have separate bounds.
+// FORM values retain their finite source range; semantic segments saturate in
+// the driver, so extended negative expressions are not collapsed to FORM=-1.
 // The destination is supplied by the driver and reused for every frame.
 export const FACE_PARAMETERS = [
   ...SIDES.flatMap((side) => [
     [`PARAM_EYE_${side}_OPEN`, 1, 0, 1.5],
     [`PARAM_EYE_${side}_SMILE`, 0, 0, 1],
-    ...['X', 'Y', 'ANGLE', 'FORM'].map((axis) => [`PARAM_BROW_${side}_${axis}`, 0, -1, 1]),
+    ...['X', 'Y', 'ANGLE'].map((axis) => [`PARAM_BROW_${side}_${axis}`, 0, -1, 1]),
+    [`PARAM_BROW_${side}_FORM`, 0],
   ]),
   ['PARAM_MOUTH_OPEN_Y', 0, 0, 1],
-  ['PARAM_MOUTH_FORM_01', 0, -1, 1],
+  ['PARAM_MOUTH_FORM_01', 0],
   ['PARAM_MOUTH_SCALE', 0, -1, 1],
   ['PARAM_MOUTH_FORM_Y', 0, -1, 1],
   ['PARAM_EYE_BALL_X', 0, -1, 1],
@@ -31,7 +34,7 @@ export function readFaceParameters(parameters, output) {
   for (let i = 0; i < FACE_PARAMETERS.length; i++) {
     const [id, initial, low, high] = FACE_PARAMETERS[i];
     const value = parameters[id] ?? initial;
-    const bounded = Math.max(low, Math.min(high, value));
+    const bounded = Math.max(low ?? -Infinity, Math.min(high ?? Infinity, value));
     changed ||= output[i] !== bounded;
     output[i] = bounded;
   }

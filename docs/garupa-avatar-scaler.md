@@ -14,6 +14,7 @@ head component 的同名声明使用 `parameters.profile`。组合中存在 head
 
 | profile 字段 | 含义 / 缺省值 |
 | --- | --- |
+| `id` | 原 `AvatarDescription.Id`，输入包含时保留；可用于参数表情的原生角色分组 |
 | `height` | 角色身高，米，正数；以 1.55 米为缩放基准 |
 | `breastSize` | 原胸围参数，缺省 50；不是米或 Morph 权重 |
 | `legSpacing`、`headScaling`、`hipScaling`、`shoulderSpacing` | 对应体型倍率，缺省 1 |

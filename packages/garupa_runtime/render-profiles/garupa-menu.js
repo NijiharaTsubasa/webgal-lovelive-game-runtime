@@ -100,7 +100,7 @@ export function collectMenuRecords(THREE, root, parts = []) {
         runtimeBounds.set(runtime, bound);
         if (!runtimeFrames.has(runtime)) runtimeFrames.set(runtime, {});
       }
-      records.push({ source: object, geometry, bounds: bounds.get(boundsNode), grouped: registry.length > 1,
+      records.push({ source: object, geometry, vertexSource: object.geometry, bounds: bounds.get(boundsNode), grouped: registry.length > 1,
         renderQueue, layer: inheritedLayer(object), passes });
     }
   });
@@ -258,7 +258,23 @@ export function createRenderProfile({ THREE, renderer, parts = [], diagnostics =
     for (const name of phases) {
       const transparent = name === 'accumulate' || name === 'transparent' || name === 'alphaWriteOff';
       for (const item of draws[name]) {
-        const { source } = item.record;
+        const { source, geometry, grouped } = item.record;
+        // Parameter adapters can activate a private geometry for this actor.
+        // Material-slot views keep their draw groups and share its live buffers.
+        if (grouped && item.record.vertexSource !== source.geometry) {
+          const live = source.geometry;
+          geometry.index = live.index;
+          geometry.attributes = live.attributes;
+          geometry.morphAttributes = live.morphAttributes;
+          geometry.morphTargetsRelative = live.morphTargetsRelative;
+          geometry.boundingBox = live.boundingBox;
+          geometry.boundingSphere = live.boundingSphere;
+          geometry.drawRange = live.drawRange;
+          item.record.vertexSource = live;
+        }
+        item.proxy.geometry = grouped ? geometry : source.geometry;
+        item.proxy.morphTargetInfluences = source.morphTargetInfluences;
+        item.proxy.morphTargetDictionary = source.morphTargetDictionary;
         // CharacterRenderer disables Three's skinned bounding-sphere culling.
         // Native renderer bounds remain authoritative for this profile.
         item.proxy.visible = visible(source) && source.layers.test(camera.layers) && item.record.bounds.inView;

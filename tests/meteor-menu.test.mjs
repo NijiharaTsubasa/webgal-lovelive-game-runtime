@@ -147,6 +147,50 @@ function hostFixture(width = 810, height = 1080) {
     destroy: () => { profile.detach(f.root); profile.destroy(); } };
 }
 
+test('draw proxies follow instance geometry replacement and restoration', () => {
+  const f = hostFixture();
+  const privateGeometry = f.geometry.clone();
+  privateGeometry.attributes.position.setY(0, .91);
+  f.mesh.geometry = privateGeometry;
+  f.profile.render(f.frame);
+  assert.equal(f.bodyProxy().geometry, privateGeometry);
+  f.mesh.geometry = f.geometry;
+  f.profile.render(f.frame);
+  assert.equal(f.bodyProxy().geometry, f.geometry);
+  f.destroy();
+  privateGeometry.dispose();
+});
+
+test('material-slot draw views retain their groups while following private vertex buffers', () => {
+  const f = hostFixture();
+  f.profile.detach(f.root);
+  f.geometry.clearGroups();
+  f.geometry.addGroup(0, 3, 0);
+  f.geometry.addGroup(3, 3, 1);
+  const registered = f.mesh.userData.__parameterizedPassesByMaterial[0];
+  f.mesh.userData.__parameterizedPassesByMaterial = [registered, registered];
+  f.mesh.userData.__parameterizedMaterials = [f.material, f.material];
+  f.profile.attach(f.root);
+  f.profile.render(f.frame);
+  const proxies = [...new Set(f.rendered.flatMap(item => item.scene.children).filter(object => object.name === 'body:Forward'))];
+  assert.equal(proxies.length, 2);
+  const views = proxies.map(object => object.geometry);
+  const groups = views.map(geometry => structuredClone(geometry.groups));
+  const privateGeometry = f.geometry.clone();
+  f.mesh.geometry = privateGeometry;
+  f.profile.render(f.frame);
+  for (let i = 0; i < proxies.length; i++) {
+    assert.equal(proxies[i].geometry, views[i]);
+    assert.equal(views[i].attributes.position, privateGeometry.attributes.position);
+    assert.deepEqual(views[i].groups, groups[i]);
+  }
+  f.mesh.geometry = f.geometry;
+  f.profile.render(f.frame);
+  for (const view of views) assert.equal(view.attributes.position, f.geometry.attributes.position);
+  f.destroy();
+  privateGeometry.dispose();
+});
+
 test('host physical viewport determines targets and resizes without changing source storage or camera', async () => {
   const f = hostFixture();
   await f.profile.prepare(f.frame);

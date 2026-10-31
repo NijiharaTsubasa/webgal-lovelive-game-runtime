@@ -25,3 +25,14 @@ test('Garupa channel classification separates source Morph regions, never preset
   assert.equal(classifyFaceMorph('body_breast_L'), null);
   assert.equal(classifyFaceMorph('face.Sad'), null);
 });
+
+test('extended expression forms reach semantic drivers without premature clipping', () => {
+  const values = new Float64Array(FACE_PARAMETERS.length);
+  readFaceParameters({ PARAM_BROW_L_FORM: -1.5, PARAM_BROW_R_FORM: -3, PARAM_MOUTH_FORM_01: -2.7 }, values);
+  assert.equal(values[PARAMETER_INDEX.PARAM_BROW_L_FORM], -1.5);
+  assert.equal(values[PARAMETER_INDEX.PARAM_BROW_R_FORM], -3);
+  assert.equal(values[PARAMETER_INDEX.PARAM_MOUTH_FORM_01], -2.7);
+  readFaceParameters({ PARAM_BROW_L_FORM: 2, PARAM_MOUTH_FORM_01: 1.5 }, values);
+  assert.equal(values[PARAMETER_INDEX.PARAM_BROW_L_FORM], 2);
+  assert.equal(values[PARAMETER_INDEX.PARAM_MOUTH_FORM_01], 1.5);
+});
