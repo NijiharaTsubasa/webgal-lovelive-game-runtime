@@ -16,7 +16,7 @@ function attachment(samples = 0) {
 
 function rendererFixture({ actualSamples, failBlit = false } = {}) {
   const previous = attachment(), viewport = new THREE.Vector4(7, 11, 131, 173);
-  const scissor = new THREE.Vector4(13, 17, 89, 101), calls = [];
+  const scissor = new THREE.Vector4(13, 17, 89, 101), calls = [], queries = [];
   let current = previous, read = previous, draw = previous, face = 3, mip = 2, scissorTest = true;
   let resets = 0;
   const gl = {
@@ -26,6 +26,7 @@ function rendererFixture({ actualSamples, failBlit = false } = {}) {
     SAMPLES: 0x80a9, COLOR_BUFFER_BIT: 0x4000, DEPTH_BUFFER_BIT: 0x0100,
     NEAREST: 0x2600, SCISSOR_TEST: 0x0c11,
     getParameter(parameter) {
+      queries.push(parameter);
       if (parameter === this.SAMPLES) return actualSamples ?? draw?.samples ?? 0;
       if (parameter === this.READ_FRAMEBUFFER_BINDING) return read;
       return draw;
@@ -40,7 +41,27 @@ function rendererFixture({ actualSamples, failBlit = false } = {}) {
       if (failBlit) throw new Error('deliberate framebuffer failure');
     },
   };
+  function propertiesStore() {
+    const values = new WeakMap();
+    return { get(target) {
+      if (!values.has(target)) {
+        values.set(target, {});
+        target.addEventListener('dispose', () => values.delete(target));
+      }
+      return values.get(target);
+    } };
+  }
+  const framebufferState = new Map();
+  function bindFramebuffer(target, value) {
+    if (framebufferState.get(target) === value) return;
+    gl.bindFramebuffer(target, value); framebufferState.set(target, value);
+    if (target === gl.FRAMEBUFFER) framebufferState.set(gl.DRAW_FRAMEBUFFER, value);
+    if (target === gl.DRAW_FRAMEBUFFER) framebufferState.set(gl.FRAMEBUFFER, value);
+  }
   const renderer = {
+    properties: propertiesStore(),
+    state: { bindFramebuffer,
+      setScissorTest: value => { scissorTest = value; } },
     getContext: () => gl, getRenderTarget: () => current,
     getActiveCubeFace: () => face, getActiveMipmapLevel: () => mip,
     getViewport: value => value.copy(viewport), getScissor: value => value.copy(scissor),
@@ -48,7 +69,7 @@ function rendererFixture({ actualSamples, failBlit = false } = {}) {
     setViewport: value => viewport.copy(value), setScissor: value => scissor.copy(value),
     setScissorTest: value => { scissorTest = value; },
     setRenderTarget(target, nextFace = 0, nextMip = 0) {
-      current = read = draw = target; face = nextFace; mip = nextMip;
+      current = target; bindFramebuffer(gl.FRAMEBUFFER, target); face = nextFace; mip = nextMip;
       viewport.set(0, 0, target?.width ?? 1, target?.height ?? 1);
       scissor.copy(viewport);
     },
@@ -59,9 +80,10 @@ function rendererFixture({ actualSamples, failBlit = false } = {}) {
     assert.equal(face, 3); assert.equal(mip, 2);
     assert.deepEqual(viewport.toArray(), [7, 11, 131, 173]);
     assert.deepEqual(scissor.toArray(), [13, 17, 89, 101]);
-    assert.equal(scissorTest, true); assert.equal(resets, 1);
+    assert.equal(scissorTest, true); assert.equal(resets, 0);
   }
-  return { renderer, gl, calls, assertRestored };
+  return { renderer, gl, calls, queries, assertRestored,
+    restoreContext: () => { renderer.properties = propertiesStore(); } };
 }
 
 test('opaque resolve copies color and D24 depth with nearest and restores host state', () => {
@@ -83,6 +105,48 @@ test('opaque resolve rejects driver sample downgrade and restores host state bef
   const f = rendererFixture({ actualSamples: 2 });
   assert.throws(() => resolveOpaqueAttachments(THREE, f.renderer, attachment(4), attachment()), /4|sample/i);
   assert.equal(f.calls.length, 0); f.assertRestored();
+});
+
+test('repeated resolve and depth copies reuse attachment bindings without GL queries', () => {
+  const f = rendererFixture(), source = attachment(4), destination = attachment(), oit = attachment();
+  const frame = () => {
+    resolveOpaqueAttachments(THREE, f.renderer, source, destination);
+    copyDepthAttachment(THREE, f.renderer, destination, oit);
+    copyDepthAttachment(THREE, f.renderer, oit, destination);
+  };
+  frame();
+  assert.equal(f.queries.filter(parameter => parameter === f.gl.FRAMEBUFFER_BINDING).length, 4);
+  assert.equal(f.queries.filter(parameter => parameter === f.gl.SAMPLES).length, 1);
+  const queries = f.queries.length;
+  frame(); frame();
+  assert.equal(f.queries.length, queries);
+  assert.equal(f.calls.length, 9);
+  f.assertRestored();
+});
+
+test('warming a new destination keeps the cached source READ binding correct', () => {
+  const f = rendererFixture(), source = attachment(4), first = attachment(), second = attachment();
+  f.renderer.setRenderTarget(source);
+  resolveOpaqueAttachments(THREE, f.renderer, source, first);
+  resolveOpaqueAttachments(THREE, f.renderer, source, second);
+  assert.equal(f.calls[0].read, source); assert.equal(f.calls[0].draw, first);
+  assert.equal(f.calls[1].read, source); assert.equal(f.calls[1].draw, second);
+});
+
+test('resize, disposal and context restoration revalidate newly allocated attachments', () => {
+  const f = rendererFixture(), source = attachment(4), destination = attachment();
+  const resolve = () => resolveOpaqueAttachments(THREE, f.renderer, source, destination);
+  resolve();
+  assert.equal(f.queries.length, 4);
+  source.setSize(91, 127); destination.setSize(91, 127);
+  resolve();
+  assert.equal(f.queries.length, 7);
+  assert.deepEqual(f.calls.at(-1).args.slice(0, 8), [0, 0, 91, 127, 0, 0, 91, 127]);
+  source.dispose(); resolve();
+  assert.equal(f.queries.length, 9);
+  f.restoreContext(); resolve();
+  assert.equal(f.queries.length, 13);
+  f.assertRestored();
 });
 
 const invalidAttachments = [

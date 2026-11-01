@@ -117,8 +117,17 @@ function hostFixture(width = 810, height = 1080) {
     disable() {}, blitFramebuffer(...args) {
       blits.push(args); operations.push({ kind: 'blit', args, source: readFramebuffer, target: drawFramebuffer });
     } };
+  const allocations = new WeakMap();
   const renderer = { extensions: { has: () => true },
+    properties: { get(target) {
+      if (!allocations.has(target)) {
+        allocations.set(target, {});
+        target.addEventListener('dispose', () => allocations.delete(target));
+      }
+      return allocations.get(target);
+    } },
     state: { viewport: value => viewport.copy(value), scissor: value => scissor.copy(value),
+      bindFramebuffer: (target, value) => gl.bindFramebuffer(target, value),
       setScissorTest: value => { scissorTest = value; } },
     setRenderTarget: target => {
       currentTarget = readFramebuffer = drawFramebuffer = target;

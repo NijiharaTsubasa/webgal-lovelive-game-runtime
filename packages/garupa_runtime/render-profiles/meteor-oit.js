@@ -57,6 +57,39 @@ export function resolveOpaqueAttachments(THREE, renderer, source, destination) {
   blitAttachments(THREE, renderer, source, destination, true);
 }
 
+const framebufferBindings = new WeakMap();
+
+function attachmentFramebuffer(renderer, target, face = 0, mip = 0, validateSamples = false) {
+  let bindings = framebufferBindings.get(renderer);
+  if (!bindings) { bindings = new WeakMap(); framebufferBindings.set(renderer, bindings); }
+  // Three replaces this properties object when an attachment is disposed or
+  // resized, and replaces the properties store when its context is restored.
+  const allocation = renderer.properties.get(target);
+  let attachments = bindings.get(allocation);
+  if (!attachments) { attachments = new Map(); bindings.set(allocation, attachments); }
+  const key = `${face}:${mip}`;
+  let binding = attachments.get(key);
+  if (!binding) {
+    renderer.setRenderTarget(target, face, mip);
+    const gl = renderer.getContext();
+    binding = { framebuffer: gl.getParameter(gl.FRAMEBUFFER_BINDING) };
+    // FRAMEBUFFER binds also change GL's READ binding, but Three caches READ
+    // separately. Synchronize it after realizing an attachment.
+    renderer.state.bindFramebuffer(gl.READ_FRAMEBUFFER, binding.framebuffer);
+    attachments.set(key, binding);
+  }
+  if (validateSamples && !binding.samplesValidated) {
+    renderer.setRenderTarget(target, face, mip);
+    const gl = renderer.getContext();
+    renderer.state.bindFramebuffer(gl.READ_FRAMEBUFFER, binding.framebuffer);
+    if (gl.getParameter(gl.SAMPLES) !== 4) {
+      throw new Error('Meteor opaque attachment did not provide 4x MSAA');
+    }
+    binding.samplesValidated = true;
+  }
+  return binding.framebuffer;
+}
+
 function blitAttachments(THREE, renderer, source, destination, colorAndDepth) {
   const gl = renderer.getContext();
   const previous = renderer.getRenderTarget();
@@ -66,22 +99,19 @@ function blitAttachments(THREE, renderer, source, destination, colorAndDepth) {
   const scissor = renderer.getScissor(new THREE.Vector4());
   const scissorTest = renderer.getScissorTest();
   try {
-    renderer.setRenderTarget(source);
-    const read = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-    if (colorAndDepth && gl.getParameter(gl.SAMPLES) !== 4) {
-      throw new Error('Meteor opaque attachment did not provide 4x MSAA');
-    }
-    renderer.setRenderTarget(destination);
-    const draw = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, read);
-    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, draw);
-    gl.disable(gl.SCISSOR_TEST);
+    const read = attachmentFramebuffer(renderer, source, 0, 0, colorAndDepth);
+    const draw = attachmentFramebuffer(renderer, destination);
+    renderer.state.bindFramebuffer(gl.READ_FRAMEBUFFER, read);
+    renderer.state.bindFramebuffer(gl.DRAW_FRAMEBUFFER, draw);
+    renderer.state.setScissorTest(false);
     gl.blitFramebuffer(0, 0, source.width, source.height, 0, 0, destination.width,
       destination.height, gl.DEPTH_BUFFER_BIT | (colorAndDepth ? gl.COLOR_BUFFER_BIT : 0), gl.NEAREST);
   } finally {
-    // Direct framebuffer binds invalidate Three's cached GL state.
-    renderer.resetState();
     renderer.setRenderTarget(previous, face, mip);
+    // Restore READ as well as DRAW: a subsequent setRenderTarget(previous)
+    // may reuse the cached draw binding before a direct pixel read.
+    const restored = previous ? attachmentFramebuffer(renderer, previous, face, mip) : null;
+    renderer.state.bindFramebuffer(gl.READ_FRAMEBUFFER, restored);
     renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest);
   }
 }

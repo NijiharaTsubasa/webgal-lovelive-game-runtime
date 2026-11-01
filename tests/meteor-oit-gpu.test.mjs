@@ -173,3 +173,97 @@ test('4x opaque coverage and depth resolve survive the single-sample OIT round t
     assert.equal(result.error, 0); assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });
+
+test('cached blit bindings survive repeated draws, resize and WebGL context restoration', async () => {
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  try {
+    const page = await browser.newPage(), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    const files = new Map([
+      ['/three.module.js', '../node_modules/three/build/three.module.js'],
+      ['/three.core.js', '../node_modules/three/build/three.core.js'],
+      ['/meteor-oit.js', '../packages/garupa_runtime/render-profiles/meteor-oit.js'],
+      ['/meteor-oit-programs.js', '../packages/garupa_runtime/render-profiles/meteor-oit-programs.js'],
+    ]);
+    await page.route('http://meteor-attachments.test/**', async route => {
+      const file = files.get(new URL(route.request().url()).pathname);
+      await route.fulfill(file ? { contentType: 'text/javascript', body: await readFile(new URL(file, import.meta.url), 'utf8') }
+        : { contentType: 'text/html', body: '<!doctype html><script type="importmap">{"imports":{"three":"/three.module.js"}}</script>' });
+    });
+    await page.goto('http://meteor-attachments.test/');
+    const result = await page.evaluate(async () => {
+      const THREE = await import('/three.module.js');
+      const { resolveOpaqueAttachments, copyDepthAttachment } = await import('/meteor-oit.js');
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+      renderer.setSize(8, 8); renderer.autoClear = false;
+      const makeTarget = samples => {
+        const target = new THREE.WebGLRenderTarget(8, 8, { samples, depthBuffer: true, stencilBuffer: false });
+        target.texture.colorSpace = THREE.NoColorSpace;
+        target.depthTexture = new THREE.DepthTexture(8, 8, THREE.UnsignedIntType);
+        return target;
+      };
+      const source = makeTarget(4), resolved = makeTarget(0), depthCopy = makeTarget(0);
+      const geometry = new THREE.PlaneGeometry(2, 2), camera = new THREE.Camera();
+      const material = new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3,
+        uniforms: { depth: { value: -.5 }, colorValue: { value: new THREE.Vector4(.8, .2, .1, 1) } },
+        vertexShader: 'precision highp float; in vec3 position; uniform float depth; void main(){gl_Position=vec4(position.xy,depth,1.0);}',
+        fragmentShader: 'precision highp float; uniform vec4 colorValue; out vec4 color; void main(){color=colorValue;}' });
+      const scene = new THREE.Scene(), mesh = new THREE.Mesh(geometry, material);
+      mesh.frustumCulled = false; scene.add(mesh);
+      const gl = renderer.getContext(), getParameter = gl.getParameter.bind(gl);
+      let measuring = false, queries = 0;
+      gl.getParameter = function (parameter) {
+        if (measuring && (parameter === gl.FRAMEBUFFER_BINDING || parameter === gl.SAMPLES)) queries++;
+        return getParameter(parameter);
+      };
+      function draw() {
+        material.uniforms.depth.value = -.5; material.uniforms.colorValue.value.set(.8, .2, .1, 1);
+        renderer.setRenderTarget(source); renderer.setClearColor(0, 0); renderer.clear(true, true, false);
+        renderer.render(scene, camera);
+        queries = 0; measuring = true;
+        try {
+          resolveOpaqueAttachments(THREE, renderer, source, resolved);
+          copyDepthAttachment(THREE, renderer, resolved, depthCopy);
+          copyDepthAttachment(THREE, renderer, depthCopy, resolved);
+        } finally { measuring = false; }
+        const queryCount = queries;
+        material.uniforms.depth.value = .5; material.uniforms.colorValue.value.set(0, 0, 1, 1);
+        renderer.setRenderTarget(resolved); renderer.render(scene, camera);
+        const pixel = new Uint8Array(4);
+        renderer.readRenderTargetPixels(resolved, 1, 1, 1, 1, pixel);
+        return { pixel: [...pixel], queries: queryCount, error: gl.getError() };
+      }
+      const first = draw();
+      const newDestination = makeTarget(0), coldPixel = new Uint8Array(4);
+      renderer.setRenderTarget(source);
+      resolveOpaqueAttachments(THREE, renderer, source, newDestination);
+      renderer.readRenderTargetPixels(newDestination, 1, 1, 1, 1, coldPixel);
+      const coldDestination = { pixel: [...coldPixel], error: gl.getError() };
+      newDestination.dispose();
+      const repeated = draw();
+      for (const target of [source, resolved, depthCopy]) target.setSize(13, 11);
+      const resized = draw(), repeatedResized = draw();
+      const loss = gl.getExtension('WEBGL_lose_context');
+      if (!loss) throw new Error('Context restoration test requires WEBGL_lose_context');
+      const lost = new Promise(resolve => renderer.domElement.addEventListener('webglcontextlost', event => {
+        event.preventDefault(); resolve();
+      }, { once: true }));
+      const restored = new Promise(resolve => renderer.domElement.addEventListener('webglcontextrestored', resolve, { once: true }));
+      loss.loseContext(); await lost;
+      await new Promise(resolve => setTimeout(resolve, 50));
+      loss.restoreContext(); await restored;
+      const afterRestore = draw(), repeatedRestored = draw();
+      for (const target of [source, resolved, depthCopy]) target.dispose();
+      material.dispose(); geometry.dispose(); renderer.dispose();
+      return { first, coldDestination, repeated, resized, repeatedResized, afterRestore, repeatedRestored };
+    });
+    for (const value of Object.values(result)) {
+      assert.equal(value.error, 0);
+      [204, 51, 26, 255].forEach((expected, index) => assert.ok(Math.abs(value.pixel[index] - expected) <= 1,
+        'preserved depth occludes the subsequent farther Three draw'));
+    }
+    for (const name of ['first', 'resized', 'afterRestore']) assert.equal(result[name].queries, 4, name);
+    for (const name of ['repeated', 'repeatedResized', 'repeatedRestored']) assert.equal(result[name].queries, 0, name);
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
+});
