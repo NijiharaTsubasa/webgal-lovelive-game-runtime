@@ -359,7 +359,12 @@ export function createRenderProfile({ THREE, renderer, parts = [], diagnostics =
       for (let pass = 0; pass < 2; pass++) {
         if (frame.cancelled()) return;
         this.render(frame);
-        await new Promise(resolve => setTimeout(resolve, 0));
+        // Asset preparation must finish even while offline export pauses the story clock.
+        await new Promise(resolve => {
+          const schedule = globalThis.__webgalOfflineExportHost?.scheduleAssetMount;
+          if (schedule) schedule(resolve);
+          else setTimeout(resolve, 0);
+        });
       }
       if (!frame.cancelled() && preparationRevision === revision) preparedRevision = revision;
     },

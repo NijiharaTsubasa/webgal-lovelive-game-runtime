@@ -278,6 +278,24 @@ test('opaque and outline draw on MSAA before resolve while OIT and output retain
   assert.equal(disposed.size, ownedTargets.length, 'destroy releases both opaque targets and all OIT attachments');
 });
 
+test('offline OIT preparation yields through the host while the story clock is paused', async () => {
+  const f = hostFixture();
+  const originalHost = globalThis.__webgalOfflineExportHost;
+  let scheduled = 0;
+  globalThis.__webgalOfflineExportHost = {
+    scheduleAssetMount(callback) {
+      scheduled++;
+      queueMicrotask(callback);
+    },
+  };
+  try {
+    await f.profile.prepare(f.frame);
+    assert.equal(scheduled, 2);
+  } finally {
+    globalThis.__webgalOfflineExportHost = originalHost;
+  }
+});
+
 test('awaited prepare warms the complete OIT pipeline once and invalidates on membership changes', async () => {
   const f = hostFixture();
   await f.profile.prepare(f.frame);
