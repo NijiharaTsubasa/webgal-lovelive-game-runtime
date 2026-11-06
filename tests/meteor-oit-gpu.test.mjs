@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 
@@ -92,10 +92,6 @@ void main(){accum=vec4(.2,.4,.6,.25);reveal=vec4(0,.5,0,.25);}
     assert.equal(result.reused,true); assert.equal(result.error,0); assert.deepEqual(errors,[]);
     assert.ok(loaded.some(item => item.url.endsWith('/meteor-oit.js')));
     assert.ok(loaded.some(item => item.url.endsWith('/meteor-oit-programs.js')));
-    const output = new URL('../../validation/three-oit-probe.json', import.meta.url);
-    await mkdir(new URL('./', output), { recursive: true });
-    await writeFile(output, JSON.stringify({ status: 'PASS', date: new Date().toISOString(),
-      result, loaded, boundary: 'Synthetic OIT operation test, not character or rendered-equivalence acceptance.' }, null, 2) + '\n');
   } finally { await browser.close(); }
 });
 
