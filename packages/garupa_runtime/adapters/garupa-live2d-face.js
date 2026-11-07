@@ -1,4 +1,4 @@
-import { FACE_PARAMETERS, PARAMETER_INDEX as P, classifyFaceMorph, readFaceParameters } from './garupa-face-controls.js';
+import { FACE_PARAMETERS, PARAMETER_INDEX as P, classifyFaceMorph, readFaceParameters, eyeOpenness } from './garupa-face-controls.js';
 import { GarupaEyeDriver } from './garupa-eye-driver.js';
 import { mouthSemantics } from './garupa-mouth-opening.js';
 import { createBrowDriver } from './garupa-brow-driver.js';
@@ -172,13 +172,15 @@ export class GarupaLive2dFace {
     this.weights.fill(0);
     for (let sideIndex = 0; sideIndex < SIDES.length; sideIndex++) {
       const parameters = SIDE_PARAMETERS[sideIndex];
-      const open = clamp(values[parameters.open]);
-      const smile = values[parameters.smile];
+      const open = eyeOpenness(values[parameters.open], this.capabilities.characterId);
+      const rawSmile = values[parameters.smile];
+      const smilingOpen = eyeOpenness(values[parameters.open], this.capabilities.characterId, rawSmile);
+      const smile = clamp(rawSmile);
       const aliases = this.eyeBases[sideIndex];
       const form = values[P.PARAM_EYE_FORM];
       const close = (1 - open) * (1 - smile);
-      const closedSmile = (1 - open) * smile;
-      const openSmile = open * smile;
+      const closedSmile = (1 - smilingOpen) * smile;
+      const openSmile = smilingOpen * smile;
       const formAmount = open * (1 - smile) * Math.abs(form);
       this.add(aliases[0], close);
       this.add(aliases[1], closedSmile);

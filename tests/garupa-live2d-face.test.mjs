@@ -62,6 +62,33 @@ test('partial blink and smile preserve separate left/right closure semantics', (
   driver.dispose();
 });
 
+test('early-opening avatar groups preserve the reference half-open landmark and blink endpoints', () => {
+  for (const [id, landmarks] of [[36, [.436, .872, .917]], [38, [.421, .841, .852]], [39, [.408, .816, .927]]]) {
+    const f = fixture();
+    f.part.component.behaviors = [{ name: 'Garupa.AvatarScaler', parameters: { profile: { id } } }];
+    const driver = createExpressionAdapter(f.context);
+    for (const [open, close] of [[0, 1], [.25, 1 - landmarks[0]], [.5, 1 - landmarks[1]], [.75, 1 - landmarks[2]], [1, 0]]) {
+      driver.apply({ PARAM_EYE_L_OPEN: open, PARAM_EYE_R_OPEN: 1 });
+      assert.ok(Math.abs(f.weight('face_main_eye_close_L') - close) < 1e-12, `${id}/${open}`);
+      assert.equal(f.weight('face_main_eye_close_R'), 0);
+    }
+    driver.apply({ PARAM_EYE_L_OPEN: 0, PARAM_EYE_L_SMILE: 1 });
+    assert.equal(f.weight('face_main_eye_wink_L'), 1);
+    driver.dispose();
+  }
+});
+
+test('ordinary and smiling eye curves mix independently on the same avatar', () => {
+  const f = fixture();
+  f.part.component.behaviors = [{ name: 'Garupa.AvatarScaler', parameters: { profile: { id: 29 } } }];
+  const driver = createExpressionAdapter(f.context);
+  driver.apply({ PARAM_EYE_L_OPEN: .5, PARAM_EYE_L_SMILE: .5, PARAM_EYE_R_OPEN: 1 });
+  assert.ok(Math.abs(f.weight('face_main_eye_close_L') - (1 - .398) * .5) < 1e-12);
+  assert.ok(Math.abs(f.weight('face_main_eye_wink_L') - (1 - .518) * .5) < 1e-12);
+  assert.equal(f.weight('face_main_eye_close_R'), 0);
+  driver.dispose();
+});
+
 test('closed parameter forms never activate an opening vowel on a classified closure direction', () => {
   const f = fixture(['face_main_mouth_serious']);
   const driver = createExpressionAdapter(f.context);
