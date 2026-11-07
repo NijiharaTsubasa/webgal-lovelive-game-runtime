@@ -5,6 +5,7 @@ import { createBrowDriver } from './garupa-brow-driver.js';
 import { calibrateOpenSmile } from './garupa-eye-smile.js';
 import { resolveEyeCapabilities } from './garupa-eye-capabilities.js';
 import { discoverMouthCapabilities } from './garupa-mouth-capabilities.js';
+import { createEyelidDriver, eyelidCurve } from './garupa-eyelid-driver.js';
 
 const SIDES = ['L', 'R'];
 const EYE_BASES = ['close', 'closedSmile', 'openSmile', 'wide', 'formNegative', 'formPositive'];
@@ -147,6 +148,7 @@ export class GarupaLive2dFace {
     this.eyeStrengths = this.eyeBases.map((aliases) => aliases.map((vector) => vector.reduce((maximum, value) => Math.max(maximum, value), 0)));
     this.brows = createBrowDriver(context, part, this.bindings);
     this.eyes = new GarupaEyeDriver(context, part, caps.size > 0);
+    this.eyelids = createEyelidDriver(context, part, this.bindings, eyelidCurve(characterId));
   }
 
   compile(vector) {
@@ -161,6 +163,7 @@ export class GarupaLive2dFace {
   restore() {
     this.brows.restore();
     this.eyes.restore();
+    this.eyelids.restore();
     if (this.active) {
       for (const binding of this.bindings) binding.array[binding.index] = binding.original;
       this.active = false;
@@ -226,6 +229,7 @@ export class GarupaLive2dFace {
     }
     this.active = true;
     this.brows.apply(this.parameters);
+    this.eyelids.apply(this.parameters[P.PARAM_EYELID_L], this.parameters[P.PARAM_EYELID_R]);
     this.eyes.apply(this.parameters[P.PARAM_EYE_BALL_X], this.parameters[P.PARAM_EYE_BALL_Y],
       this.parameters[P.PARAM_EYE_SCALE], this.parameters[P.PARAM_EYE_HIGHLIGHT]);
   }
@@ -235,6 +239,7 @@ export class GarupaLive2dFace {
     this.brows.dispose();
     this.bindings.length = 0;
     this.eyes.dispose();
+    this.eyelids.dispose();
     this.disposed = true;
   }
 }

@@ -74,6 +74,7 @@ export const FACE_PARAMETERS = [
   ...SIDES.flatMap((side) => [
     [`PARAM_EYE_${side}_OPEN`, 1, 0, 1.5],
     [`PARAM_EYE_${side}_SMILE`, 0, 0],
+    [`PARAM_EYELID_${side}`, 0, -1, 1],
     ...['X', 'Y', 'ANGLE'].map((axis) => [`PARAM_BROW_${side}_${axis}`, 0, -1, 1]),
     [`PARAM_BROW_${side}_FORM`, 0],
   ]),

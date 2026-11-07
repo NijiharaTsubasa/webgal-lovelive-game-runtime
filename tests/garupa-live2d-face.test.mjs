@@ -52,6 +52,24 @@ function fixture(extraMouths = []) {
 
 // Synthetic geometry exercises an unclassified but legal model. Audited facial
 // profiles have separate numeric tests; neither test depends on private assets.
+test('the face adapter restores crease geometry and clears a previous expression eyelid offset', () => {
+  const f = fixture();
+  for (const [side, x] of [['L', .03], ['R', -.03]]) f.context.resolveNode('head', `${side}Eye_0_0`).position.x = x;
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([.01, 1, 0, .03, 1, 0, .02, 1.01, 0], 3));
+  geometry.userData.garupaEyelid = { left: [0, 1, 2] };
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial());
+  f.root.add(mesh);
+  const driver = createExpressionAdapter(f.context);
+  driver.apply({ PARAM_EYELID_L: -1, PARAM_EYE_L_OPEN: .6 });
+  assert.ok(mesh.geometry.attributes.position.getY(0) < 1);
+  driver.apply({ PARAM_EYE_L_OPEN: 1 });
+  assert.equal(mesh.geometry.attributes.position.getY(0), 1);
+  driver.restore();
+  assert.equal(mesh.geometry, geometry);
+  driver.dispose();
+});
+
 test('partial blink and smile preserve separate left/right closure semantics', () => {
   const f = fixture();
   const driver = createExpressionAdapter(f.context);
