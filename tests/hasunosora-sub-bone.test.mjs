@@ -83,11 +83,14 @@ test("Swing clamps interpolation and writes every output, preserving unrelated c
     const f = fixture([{ magnification: m, outputs: [2, 3] }], true);
     f.nodes[1].quaternion.copy(reflected(unityQ([0, 0, 1], 60)));
     f.nodes[2].position.set(0.04, 0.05, 0.06);
-    f.driver.LateUpdate();
-    for (const node of f.nodes.slice(2)) close(node.quaternion.angleTo(reflected(unityQ([0, 0, 1], Math.max(0, Math.min(1, m)) * 60))), 0);
+    f.driver.PostPhysics();
+    const expected = reflected(unityQ([0, 0, 1], Math.max(0, Math.min(1, m)) * 60));
+    for (const node of f.nodes.slice(2)) close(node.quaternion.angleTo(expected), 0);
     assert.deepEqual(f.nodes[2].position.toArray(), [0.04, 0.05, 0.06]);
+    // the Animator never writes auxiliary channels: the output keeps its value into the next frame
     f.driver.Update();
-    close(f.nodes[2].quaternion.angleTo(new THREE.Quaternion()), 0);
+    f.driver.LateUpdate();
+    close(f.nodes[2].quaternion.angleTo(expected), 0);
   }
 });
 
@@ -95,7 +98,7 @@ test("Twist is unclamped and does not multiply initialSubRotation", () => {
   for (const m of [-0.5, 1.4]) {
     const f = fixture([{ category: 2, magnification: m, initialSubRotation: unityQ([0, 1, 0], 29).toArray() }]);
     f.nodes[1].quaternion.copy(reflected(unityQ([1, 0, 0], 70)));
-    f.driver.LateUpdate();
+    f.driver.PostPhysics();
     close(f.nodes[2].quaternion.angleTo(reflected(unityQ([1, 0, 0], 70 * m))), 0);
   }
 });
@@ -104,11 +107,11 @@ test("Move evaluates nonendpoints, positive/negative intervals and None axis", (
   for (const [angle, minAngle, maxAngle, expected] of [[45, -90, 90, -0.0125], [180, -90, 90, -0.025], [-120, -90, 90, 0.025], [20, 10, 30, -0.05 * 10 / 180], [-20, -30, -10, 0.05 * 10 / 180]]) {
     const f = fixture([{ category: 7, magnification: -0.05, minAngle, maxAngle }]);
     f.nodes[1].quaternion.copy(reflected(unityQ([0, 0, 1], angle)));
-    f.driver.LateUpdate();
+    f.driver.PostPhysics();
     close(f.nodes[2].position.x, -expected, 1e-8);
   }
   const f = fixture([{ category: 7, outputAxis: 0, initialSubPosition: [0.1, 0.2, 0.3] }]);
-  f.driver.LateUpdate();
+  f.driver.PostPhysics();
   assert.deepEqual(f.nodes[2].position.toArray(), [-0.1, 0.2, 0.3]);
 });
 
@@ -117,29 +120,53 @@ test("master order reads preceding output and repeat does not accumulate", () =>
   f.nodes[1].quaternion.copy(reflected(unityQ([0, 0, 1], 80)));
   for (let i = 0; i < 100; i++) {
     if (i % 2) f.driver.Update();
-    f.driver.LateUpdate();
+    f.driver.PostPhysics();
     close(f.nodes[3].position.x, -0.05 * 40 / 180, 1e-8);
   }
 });
 
-test("restore snapshots each frame and disable never overwrites subsequent animation", () => {
+test("source timing: rules run after physics, which reads the previous frame's outputs", () => {
+  const f = fixture([{}]);
+  const frame = (degrees, physics = () => {}) => {
+    f.driver.Update();
+    f.nodes[1].quaternion.copy(reflected(unityQ([0, 0, 1], degrees)));   // animation
+    f.driver.LateUpdate();
+    physics();
+    f.driver.PostPhysics();
+  };
+  const seen = [];
+  const physics = () => seen.push(f.nodes[2].quaternion.angleTo(new THREE.Quaternion()) * 180 / Math.PI);
+  frame(20, physics);
+  frame(60, physics);
+  frame(60, physics);
+  // frame 1 sees the rest pose, frame 2 the first frame's 10 degrees, frame 3 the second frame's 30 degrees
+  [0, 10, 30].forEach((expected, i) => close(seen[i], expected, 1e-4));
+  close(f.nodes[2].quaternion.angleTo(reflected(unityQ([0, 0, 1], 30))), 0);
+});
+
+test("animation writes win until the controller runs, and disable restores only its own value", () => {
   const f = fixture([{}]);
   const input = reflected(unityQ([0, 0, 1], 48));
   f.nodes[1].quaternion.copy(input);
-  f.driver.LateUpdate();
-  f.driver.Update();
+  f.driver.PostPhysics();
+  close(f.nodes[2].quaternion.angleTo(reflected(unityQ([0, 0, 1], 24))), 0);
   const animated = reflected(unityQ([1, 0, 0], 17));
-  f.nodes[2].quaternion.copy(animated);
-  f.driver.LateUpdate();
   f.driver.Update();
-  close(f.nodes[2].quaternion.angleTo(animated), 0);
+  f.nodes[2].quaternion.copy(animated);          // an animation that does write the auxiliary channel
   f.driver.LateUpdate();
+  close(f.nodes[2].quaternion.angleTo(animated), 0);   // physics sees the animated value
+  f.driver.PostPhysics();
+  f.driver.OnDisable();                           // still holding our value: back to the animation's value
+  close(f.nodes[2].quaternion.angleTo(animated), 0);
+  const g = fixture([{}]);
+  g.nodes[1].quaternion.copy(input);
+  g.driver.PostPhysics();
   const newer = reflected(unityQ([0, 1, 0], 27));
-  f.nodes[2].quaternion.copy(newer);
-  f.driver.OnDisable();
-  f.driver.OnDestroy();
-  close(f.nodes[2].quaternion.angleTo(newer), 0);
-  close(f.nodes[1].quaternion.angleTo(input), 0);
+  g.nodes[2].quaternion.copy(newer);
+  g.driver.OnDisable();
+  g.driver.OnDestroy();
+  close(g.nodes[2].quaternion.angleTo(newer), 0);  // never overwrites a newer writer
+  close(g.nodes[1].quaternion.angleTo(input), 0);
 });
 
 test("source-parent and nonidentity canonical basis bridge reads and writes source local rotation", () => {
@@ -149,7 +176,7 @@ test("source-parent and nonidentity canonical basis bridge reads and writes sour
   f.parameters.frames[2].basis = new THREE.Matrix4().makeRotationFromQuaternion(basisQ).toArray();
   f.driver.Awake();
   f.nodes[1].quaternion.copy(reflected(unityQ([0, 0, 1], 46))).multiply(basisQ.clone().invert());
-  f.driver.LateUpdate();
+  f.driver.PostPhysics();
   close(f.nodes[2].quaternion.clone().multiply(basisQ).angleTo(reflected(unityQ([0, 0, 1], 23))), 0);
 });
 

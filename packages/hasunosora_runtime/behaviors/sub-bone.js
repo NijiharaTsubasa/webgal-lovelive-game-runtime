@@ -257,7 +257,7 @@ export default class SubBoneController {
   restoreOwned() {
     for (const entry of this.owned) {
       // A subsequent animation/physics writer owns its new value. Never undo it
-      // during disable/dispose or a second LateUpdate without an Update.
+      // during disable/dispose.
       if (entry.written && entry.node[entry.property].equals(entry.written)) {
         entry.node[entry.property].copy(entry.saved);
       }
@@ -265,16 +265,24 @@ export default class SubBoneController {
     }
   }
 
-  Update() {
-    this.restoreOwned();
-  }
+  // Source timing (Hasunosora 5.1.0 MonoScript execution orders): Animator, then LateUpdate of SpringManager (0),
+  // FaceBonesCopier (27500), SubBoneController (28020).  The Animator never writes these auxiliary channels, so
+  // the SpringBone simulation reads the values this controller wrote in the PREVIOUS frame, and the controller
+  // itself runs after physics.  Hence: no restore before animation, and the rules run in PostPhysics.
+  Update() {}
 
-  LateUpdate() {
-    this.restoreOwned();
+  LateUpdate() {}
+
+  PostPhysics() {
     const { root, THREE } = this.context;
     root.updateWorldMatrix(true, true);
     this.inverseRoot.copy(root.matrixWorld).invert();
-    for (const entry of this.owned) entry.saved = entry.node[entry.property].clone();
+    // the value each channel would have without this controller: the original one, or whatever another writer
+    // (animation) has put there since our last write; restored on disable
+    for (const entry of this.owned) {
+      const current = entry.node[entry.property];
+      if (!entry.written || !current.equals(entry.written)) entry.saved = current.clone();
+    }
     for (const rule of this.rules) {
       const value = evaluate(THREE, rule, this.read(rule.input).q);
       for (const output of rule.outputs) this.write(output, value, rule.category === 7 ? "position" : "quaternion");
