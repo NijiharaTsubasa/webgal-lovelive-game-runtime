@@ -20,6 +20,12 @@ Swing 另有 `initialMainRight` 和 `initialSubRotation`。Twist 只使用公共
 
 规则依照 master 顺序执行，只读原定义的第一个 input，向所有 outputs 写入同一来源局部结果。输出必须是保留来源直接父节点、同枢轴刚性基变换的辅助骨。输入及其坐标换算依赖的辅助骨通道必须在读取前已由本帧较早规则写入。转换器和运行时对不满足依赖顺序的配置报错。
 
-`Update` 在动画求值前恢复上次写入的通道，`LateUpdate` 在动画和表情之后、物理之前执行规则。Swing/Twist 只接管旋转，Move 只接管位置。恢复使用当帧驱动前的值；若其他写入者已改变该通道，则保留新值。禁用与销毁使用相同所有权判断。
+规则在 `PostPhysics` 执行，也就是动画、表情和模型物理之后。这与来源的执行顺序一致：同一帧的 LateUpdate 里，SpringManager（0）→ FaceBonesCopier（27500）→ SubBoneController（28020）。
+
+来源的 Animator 不写这些辅助骨通道，所以 SpringBone 读到的是**上一帧**规则写入的值。因此 `Update` 不恢复，输出一直保留到下一帧。挂在辅助骨下的弹簧骨（例如 2014102105 挂在 RUpLegRoll 下的裙前片）也照来源晚一帧。
+
+Swing/Twist 只接管旋转，Move 只接管位置。若动画写了某个输出通道，当帧物理看到的是动画值，随后被规则覆盖。
+
+禁用与销毁时，仍持有本 Behavior 写入值的通道恢复为「没有本 Behavior 时的值」，即原值或动画最近写入的值；若其他写入者已改变该通道，则保留新值。
 
 Swing 使用钳制插值后的 swing 分量，Twist 使用非钳制 twist 插值；两者均按来源 Slerp 的 `abs(dot) >= float(0.95)` 分支采用归一化线性插值。Move 使用 Unity 的 Euler order 4、DeltaAngle 和原角区间偏移。实现保留正负 180° 的正侧分支及角度输出的 float 舍入；JavaScript 三角函数和矩阵运算使用双精度，不承诺与 native 运算逐位一致。
